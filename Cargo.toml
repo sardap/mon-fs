@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["box", "mon-fs"]
+
+default-members = ["mon-fs"]
+
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[profile.release]
+opt-level = 0
+debug = false
+
+[profile.release-dev]
+inherits = "release"
+opt-level = 0
+debug = true
+debug-assertions = false
+
+[profile.release-lto]
+inherits = "release"
+lto = true
