@@ -15,7 +15,6 @@ pub struct BoxMon {
     pub gender: BoxMonGender,
     pub name: BoxMonName,
     pub held_item: BoxMonHeldItem,
-    // pub captured_ball: BoxMonCapturedBall,
 }
 
 #[derive(Debug)]
@@ -26,17 +25,16 @@ pub enum StringMonParseError {
     InvalidItem,
 }
 
-impl BoxMon {
-    pub fn bit_count() -> usize {
-        // There has to be a better way
-        let species = BoxMonSpecies::bit_count();
-        let gender = BoxMonGender::bit_count();
-        let name = BoxMonName::bit_count();
-        let held_item = BoxMonHeldItem::bit_count();
-        // let captured_ball = BoxMonCapturedBall::bit_count();
-        return species + gender + name + held_item;
+impl BitCount for BoxMon {
+    fn bit_count() -> usize {
+        BoxMonSpecies::bit_count()
+            + BoxMonGender::bit_count()
+            + BoxMonName::bit_count()
+            + BoxMonHeldItem::bit_count()
     }
+}
 
+impl BoxMon {
     pub fn try_from_strings_mon(raw: StringsMon) -> Result<Self, StringMonParseError> {
         let species = match BoxMonSpecies::try_from_string(&raw.species) {
             Some(species) => species,
@@ -106,14 +104,6 @@ impl GameSerializer for BoxMon {
             Ok(val) => val,
             Err(err) => return Err(err),
         };
-        // offset += BoxMonHeldItem::bit_count();
-
-        // let captured_ball = match BoxMonCapturedBall::bits_to_game_value(
-        //     &value.chunk(offset, offset + BoxMonCapturedBall::bit_count()),
-        // ) {
-        //     Ok(val) => val,
-        //     Err(err) => return Err(err),
-        // };
 
         Ok(BoxMon {
             species,
@@ -152,12 +142,6 @@ impl GameSerializer for BoxMon {
             Err(err) => return Err(err),
         };
         bits.extend(next_set.0.iter());
-
-        // let next_set = match self.captured_ball.game_value_to_bits() {
-        //     Ok(val) => val,
-        //     Err(err) => return Err(err),
-        // };
-        // bits.extend(next_set.0.iter());
 
         Ok(BoxMonBitVec(bits))
     }
@@ -236,5 +220,10 @@ mod tests {
         assert_eq!(mon.species, BoxMonSpecies::POOCHYENA);
         assert_eq!(mon.gender, BoxMonGender::Male);
         assert_eq!(mon.held_item, BoxMonHeldItem::Empty);
+    }
+
+    #[test]
+    fn test_box_mon_size() {
+        assert_eq!(BoxMon::bit_count() * 2 % 8, 0);
     }
 }

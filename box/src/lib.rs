@@ -1,6 +1,6 @@
 #![feature(io_error_more)]
-use core::panic;
 pub mod box_mon;
+pub mod file_pc;
 pub mod marker_mon;
 pub mod mon_captured_ball;
 pub mod mon_field;
@@ -10,6 +10,8 @@ pub mod mon_name;
 pub mod mon_species;
 pub mod pc;
 use bit_vec::BitVec;
+use file_pc::FilePc;
+use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Default)]
 pub struct BoxMonBitVec(pub BitVec);
@@ -100,40 +102,29 @@ impl BoxMonBitVec {
     }
 }
 
-pub const fn count_to_bits(n: usize) -> usize {
-    if n == 0 {
-        0
-    } else if n <= 3 {
-        1
-    } else if n <= 7 {
-        2
-    } else if n <= 15 {
-        3
-    } else if n <= 31 {
-        4
-    } else if n <= 63 {
-        5
-    } else if n <= 127 {
-        6
-    } else {
-        panic!("Invalid field size");
+pub fn count_to_bits(n: usize) -> usize {
+    (n as f64).log2().floor() as usize
+}
+
+#[wasm_bindgen]
+pub fn encode_file(existing_pc: String, filename: String, to_encode: Vec<u8>) -> String {
+    let mut pc: pc::PC = serde_json::from_str(&existing_pc).unwrap();
+
+    while pc.mons.len() < pc::NUM_OF_MONS {
+        pc.mons.push(None);
     }
 
-    // if n <= 6 {
-    //     1
-    // } else if n <= 7 {
-    //     2
-    // } else if n <= 15 {
-    //     3
-    // } else if n <= 31 {
-    //     4
-    // } else if n <= 63 {
-    //     5
-    // } else if n <= 127 {
-    //     6
-    // } else {
-    //     panic!("Invalid field size");
-    // }
+    let mut file_pc = if let Some(file_pc) = FilePc::new_from_pc(pc) {
+        file_pc
+    } else {
+        FilePc::new()
+    };
+
+    file_pc.add_file_raw(&filename, &to_encode);
+
+    let pc: pc::PC = file_pc.into();
+
+    serde_json::to_string(&pc).unwrap()
 }
 
 #[cfg(test)]
@@ -142,7 +133,7 @@ mod test {
 
     #[test]
     fn test_to_raw() {
-        let big_data = include_bytes!("../../test_assets/p.webp");
+        let big_data = include_bytes!("../../test_assets/ricky.webp");
 
         let bits = BoxMonBitVec::new_from_raw(big_data);
 

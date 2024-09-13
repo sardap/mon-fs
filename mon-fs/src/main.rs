@@ -1,6 +1,6 @@
 use std::fs::{self, File};
 
-use mon_fs_box::pc::PC;
+use mon_fs_box::{file_pc::FilePc, pc::PC};
 use structopt::StructOpt;
 
 mod decode;
@@ -13,12 +13,13 @@ enum ProgramError {
     BadPathGiven(String),
     BadModeGiven,
     DecoderFailure(String),
+    IoError(std::io::Error),
 }
 
 fn main() -> Result<(), ProgramError> {
     let options = options::Options::from_args();
 
-    let mut pc = if options.pc_file.exists() {
+    let mut file_pc = if options.pc_file.exists() {
         let existing = match fs::read(&options.pc_file) {
             Ok(data) => data,
             Err(_) => {
@@ -31,7 +32,7 @@ fn main() -> Result<(), ProgramError> {
 
         // Decode to PC
         match serde_json::from_slice::<PC>(&existing) {
-            Ok(pc) => pc,
+            Ok(pc) => pc.into(),
             Err(_) => {
                 return Err(ProgramError::BadGuideFileGiven(format!(
                     "{}",
@@ -40,37 +41,44 @@ fn main() -> Result<(), ProgramError> {
             }
         }
     } else {
-        PC::new()
+        FilePc::new()
     };
 
     match options.command {
         options::Command::Encode(options_encode) => {
-            if let Err(err) = encode::encode_file_to_pc(&mut pc, &options_encode) {
+            if let Err(err) = encode::encode_file_to_file_pc(&mut file_pc, &options_encode) {
                 return Err(err);
             }
         }
         options::Command::Decode(options_decode) => {
             println!("Parsing screenshots...");
-            pc = match decode::load_pc_from_screenshots(&options_decode) {
+            let pc = match decode::load_pc_from_screenshots(&options_decode) {
                 Ok(pc) => pc,
                 Err(err) => {
                     return Err(err);
                 }
             };
 
-            if let Err(err) = decode::decode_pc_files(&pc, &options_decode) {
+            let file_pc = pc.into();
+
+            if let Err(err) = decode::decode_pc_files(&file_pc, &options_decode) {
                 return Err(err);
             }
         }
     }
 
     // Delete old guide file
-    match fs::remove_file(&options.pc_file) {
-        Ok(_) => {}
-        Err(_) => {}
+    if options.pc_file.exists() {
+        fs::remove_file(&options.pc_file).unwrap();
     }
-    let file = File::create(options.pc_file).unwrap();
 
+    let pc: PC = match file_pc.as_pc() {
+        Ok(pc) => pc,
+        Err(err) => {
+            return Err(ProgramError::IoError(err));
+        }
+    };
+    let file = File::create(options.pc_file).unwrap();
     serde_json::to_writer(file, &pc).unwrap();
 
     Ok(())

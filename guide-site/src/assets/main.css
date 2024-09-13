@@ -1,0 +1,42 @@
+@import './base.css';
+@import url('https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@100..800&display=swap');
+
+#app {
+  font-family: 'Playpen Sans', cursive;
+  margin: 0 auto;
+  padding-top: 2rem;
+  font-weight: normal;
+}
+
+a,
+.green {
+  text-decoration: none;
+  color: #d37fed;
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: #edcbf7;
+  }
+}
+
+.mon-img {
+  width: 48px;
+  height: 48px;
+}
+
+.mon-gender {
+  height: 16px;
+}
+
+.row-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.centered {
+  justify-content: center;
+  align-items: center;
+}

@@ -1,18 +1,15 @@
-use std::{
-    fs::File,
-    io::{self},
-    process::Command,
-};
+use std::process::Command;
 
 use mon_fs_box::{
-    box_mon::StringsMon,
-    pc::{PCReader, PcMon, PC},
+    box_mon::{BoxMon, StringsMon},
+    file_pc::FilePc,
+    pc::PC,
 };
 use serde::Deserialize;
 
 use crate::{options::OptionsDecode, ProgramError};
 
-pub fn decode_pc_files(pc: &PC, options: &OptionsDecode) -> Result<(), ProgramError> {
+pub fn decode_pc_files(pc: &FilePc, options: &OptionsDecode) -> Result<(), ProgramError> {
     let decode_path = &options.decode_to;
 
     if !decode_path.exists() {
@@ -22,18 +19,7 @@ pub fn decode_pc_files(pc: &PC, options: &OptionsDecode) -> Result<(), ProgramEr
         )));
     }
 
-    let reader = PCReader::new(pc);
-    let files = reader.list_files();
-    println!("Files to decode: {:?}", files);
-
-    for file in files {
-        println!("Decoding file: {}", file);
-        let mut reader = PCReader::new(pc);
-        reader.seek_file(&file).unwrap();
-
-        let mut file = File::create(format!("{}/{}", decode_path.display(), file)).unwrap();
-        io::copy(&mut reader, &mut file).unwrap();
-    }
+    pc.write_to_folder(decode_path);
 
     Ok(())
 }
@@ -57,7 +43,7 @@ impl Into<PC> for DecoderOutput {
                 pc.set_mon(
                     box_index,
                     mon_index,
-                    PcMon::try_from_strings_mon(mon).unwrap(),
+                    BoxMon::try_from_strings_mon(mon).unwrap(),
                 );
             }
         }

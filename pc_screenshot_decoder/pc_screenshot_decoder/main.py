@@ -9,7 +9,7 @@ from typing import List, Optional
 from hashlib import md5
 from shutil import rmtree
 
-SCREENSHOT_FOLDER = os.getenv("PC_DEC_SCREENSHOT_FOLDER", "./raw/hello_world")
+SCREENSHOT_FOLDER = os.getenv("PC_DEC_SCREENSHOT_FOLDER", "./example/photo")
 
 WORKING_FOLDER = os.getenv("PC_DEC_WORKING_FOLDER", "./working")
 FONTS_INPUT_FOLDER = os.getenv("PC_DEC_FONTS_FOLDER", "./fonts/input")
@@ -163,8 +163,6 @@ def split_spritesheet(
 
             sprite_number += 1
 
-    print(f"Successfully exported {sprite_number} sprites to {output_folder}")
-
 
 SHEETS = [
     SpriteSheet(
@@ -212,7 +210,7 @@ def letter_color(letter: str) -> tuple[int, int, int]:
 
 
 def letters_from_spritesheet(
-    sprite_sheet_folder: str, include_only_letters: Optional[List[str]]
+    sprite_sheet_folder: str, include_only_letters: Optional[str]
 ) -> List[Letter]:
     letters = []
     for file in os.listdir(sprite_sheet_folder):
@@ -248,7 +246,7 @@ def letters_from_spritesheet(
     return letters
 
 
-def possible_species_letters() -> List[str]:
+def possible_species_letters() -> str:
     species = [
         "POOCHYENA",
         "NINCADA",
@@ -256,80 +254,18 @@ def possible_species_letters() -> List[str]:
         "TAILLOW",
     ]
     # get all unique letters
+    result = ""
     letters = set()
     for specie in species:
         for letter in specie:
             letters.add(letter)
-    return list(letters)
+            result += letter
+    return result
 
 
-POSSIBLE_NAME_LETTERS = [
-    "a",
-    "A",
-    "b",
-    "B",
-    "c",
-    "C",
-    "d",
-    "D",
-    "e",
-    "E",
-    "f",
-    "F",
-    "g",
-    "G",
-    "h",
-    "H",
-    "i",
-    "I",
-    "j",
-    "J",
-    "k",
-    "K",
-    "m",
-    "M",
-    "n",
-    "N",
-    "o",
-    "O",
-    "p",
-    "P",
-    "q",
-    "Q",
-    "r",
-    "R",
-    "s",
-    "S",
-    "t",
-    "T",
-    "u",
-    "U",
-    "v",
-    "V",
-    "w",
-    "W",
-    "x",
-    "X",
-    "y",
-    "Y",
-    "z",
-    "Z",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "!",
-    "?",
-    "/",
-    "-",
-    "…",
-    "♂",
-    "♀",
-]
+POSSIBLE_NAME_LETTERS = (
+    "aAbBcCdDeEfFgGhHiIjJkKmMnNoOpPqQrRsStTuUvVwWxXyYzZ23456789!?/-…♂♀"
+)
 
 
 class Match(BaseModel):
@@ -375,7 +311,7 @@ def find_letter(letter: Letter, search_img: MatLike) -> List[Match]:
 def image_to_text(
     img_rgb: MatLike,
     sheet: SpriteSheet,
-    include_only_letters: Optional[List[str]] = None,
+    include_only_letters: Optional[str] = None,
 ) -> Optional[str]:
     img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
 
@@ -466,16 +402,11 @@ def remove_consecutive_duplicates_until_n(s: str, n: int):
     return s
 
 
-def read_image(path: str) -> BoxMon:
-    img_rgb = cv2.imread(path)
-    assert img_rgb is not None, "file could not be read, check with os.path.exists()"
-
-    striped_file_name = os.path.splitext(os.path.basename(os.path.normpath(path)))[0]
-
+def read_image(img_rgb: MatLike, working_name: Optional[str] = None) -> BoxMon:
     def write_to_working_folder():
-        if WORKING_FOLDER is not None:
+        if WORKING_FOLDER is not None and working_name is not None:
             cv2.imwrite(
-                os.path.join(WORKING_FOLDER, f"{striped_file_name}_res.png"), img_rgb
+                os.path.join(WORKING_FOLDER, f"{working_name}_res.png"), img_rgb
             )
 
     name_start_y = 84 / 160
@@ -486,10 +417,11 @@ def read_image(path: str) -> BoxMon:
     ]
     name = image_to_text(name_part, NORMAL_LETTERS, POSSIBLE_NAME_LETTERS)
     write_to_working_folder()
+    assert name is not None, "Name could not be read"
     # A Full on shit hack
     if len(name) > 10:
         name = remove_consecutive_duplicates_until_n(name, 10)
-    assert len(name) == 10, f"{path} Expected 10 characters, got {name}({len(name)})"
+    assert len(name) == 10, f"Expected 10 characters, got {name}({len(name)})"
 
     species_start_y = 103 / 160
     species_end_y = 117 / 160
@@ -525,11 +457,52 @@ class Result(BaseModel):
     boxes: List[List[BoxMon]]
 
 
+def camera_test():
+    cam = cv2.VideoCapture(0)
+
+    # Get the default frame width and height
+    frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    out = cv2.VideoWriter("output.mp4", fourcc, 20.0, (frame_width, frame_height))
+
+    while True:
+        ret, frame = cam.read()
+
+        # Write the frame to the output file
+        out.write(frame)
+
+        # Display the captured frame
+        cv2.imshow("Camera", frame)
+
+        # Press 'q' to exit the loop
+        key = cv2.waitKey(1)
+        if key == ord("q"):
+            break
+        elif key == ord(" "):
+            break
+
+        try:
+            x = read_image(frame)
+            print(x)
+        except Exception as e:
+            pass
+
+    # Release the capture and writer objects
+    cam.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+
 def main():
     # Make sure all the sprite sheets are split
     for sheet in SHEETS:
         if not sheet.exists():
             sheet.split()
+
+    # camera_test()
 
     result = Result(boxes=[[]])
 
@@ -543,7 +516,16 @@ def main():
     # read images in SCREENSHOT_FOLDER
     for screenshot in files:
         if screenshot.endswith(".png"):
-            mon = read_image(os.path.join(SCREENSHOT_FOLDER, screenshot))
+            path = os.path.join(SCREENSHOT_FOLDER, screenshot)
+
+            img_rgb = cv2.imread(path)
+            assert img_rgb is not None, "file could not be read"
+
+            striped_file_name = os.path.splitext(
+                os.path.basename(os.path.normpath(path))
+            )[0]
+
+            mon = read_image(img_rgb, striped_file_name)
             if len(result.boxes[-1]) + 1 > 30:
                 result.boxes.append([])
             result.boxes[-1].append(mon)
