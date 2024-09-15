@@ -14,12 +14,12 @@ jobs:
       - uses: jetli/wasm-pack-action@v0.4.0
       - name: Install and Build
         run: |
-          cd frontend
+          cd guide-site
           npm ci
           npm run wasm
           npm run build
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: frontend/dist
+          folder: guide-site/dist
           clean: true
