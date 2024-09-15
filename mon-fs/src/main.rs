@@ -9,10 +9,15 @@ mod options;
 
 #[derive(Debug)]
 enum ProgramError {
+    #[allow(dead_code)]
     BadGuideFileGiven(String),
+    #[allow(dead_code)]
     BadPathGiven(String),
+    #[allow(dead_code)]
     BadModeGiven,
+    #[allow(dead_code)]
     DecoderFailure(String),
+    #[allow(dead_code)]
     IoError(std::io::Error),
 }
 

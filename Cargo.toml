@@ -10,7 +10,7 @@ opt-level = 0
 debug = true
 
 [profile.release]
-opt-level = 0
+opt-level = 3
 debug = false
 
 [profile.release-dev]

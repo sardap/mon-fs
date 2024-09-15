@@ -1,4 +1,3 @@
-#![feature(io_error_more)]
 pub mod box_mon;
 pub mod file_pc;
 pub mod mon_captured_ball;

@@ -3,16 +3,20 @@ use serde_derive::Deserialize;
 fn main() {
     let mut pc = PC::new();
 
-    println!("PC size: {}:Bytes {}:KB", pc.bit_count() / 8, pc.bit_count() / 8 / 1024);
+    println!(
+        "PC size: {}:Bytes {}:KB",
+        pc.bit_count() / 8,
+        pc.bit_count() / 8 / 1024
+    );
 
     pc.add_mon(BoxMon::default());
 
     return;
 
+    let raw_json = fs::read_to_string("wild_encounters.json").expect("Could not read file");
 
-    let raw_json = fs::read_to_string("/home/psarda/repos/pokemon-fs/wild_encounters.json").expect("Could not read file");
-
-    let wild_encounters: WildEncounters = serde_json::from_str(&raw_json).expect("Could not parse JSON");
+    let wild_encounters: WildEncounters =
+        serde_json::from_str(&raw_json).expect("Could not parse JSON");
 
     let mut scores = vec![];
 
@@ -41,14 +45,12 @@ fn main() {
     println!("Hello, world!");
 }
 
-
 #[derive(Debug, Deserialize)]
 struct Fields {
     #[serde(rename = "type")]
     field_type: String,
-    encounter_rates: Vec<i32>    
+    encounter_rates: Vec<i32>,
 }
-
 
 #[derive(Debug, Deserialize)]
 struct EncounterMon {
@@ -101,12 +103,12 @@ impl Encounter {
                 *current_prob += index_prob;
             }
 
-
             for (species, prob) in mons {
                 result.push(MonProbabilities {
                     species,
                     probability: prob as f32 / 100.,
-                    absolute_probability: land_mons.encounter_rate as f32 / 100. * prob as f32 / 100.,
+                    absolute_probability: land_mons.encounter_rate as f32 / 100. * prob as f32
+                        / 100.,
                 });
             }
         }
@@ -131,12 +133,11 @@ struct EncounterProbabilities {
     probabilities: Vec<MonProbabilities>,
 }
 
-
 impl EncounterProbabilities {
     fn get_score(&self) -> f32 {
         let mut result = 0.;
         let mut over_threshold = 0;
-        
+
         for mon in &self.probabilities {
             if mon.probability < 0.2 {
                 continue;
@@ -149,13 +150,16 @@ impl EncounterProbabilities {
             return 0.;
         }
 
-        result * over_threshold as f32 
+        result * over_threshold as f32
     }
 
     fn print(&self) {
         println!("Map: {}", self.map);
         for mon in &self.probabilities {
-            println!("{}: {:.2} ({:.2})", mon.species, mon.probability, mon.absolute_probability);
+            println!(
+                "{}: {:.2} ({:.2})",
+                mon.species, mon.probability, mon.absolute_probability
+            );
         }
     }
 }
@@ -173,6 +177,4 @@ struct WildEncounterGroup {
 #[derive(Debug, Deserialize)]
 struct WildEncounters {
     wild_encounter_groups: Vec<WildEncounterGroup>,
-
 }
-

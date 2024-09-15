@@ -204,7 +204,7 @@ function savePC() {
     <p>THIS IS NOT ENDORSED OR ASSOCIATED WITH ANY COMPANY IN ANYWAY</p>
     <p>
       Created by <a target="_blank" href="https://sarda.dev">Paul Sarda </a>
-      <a target="_blank">Source code here</a>
+      <a href="https://github.com/sardap/mon-fs" target="_blank">Source code here</a>
     </p>
   </footer>
 </template>
