@@ -7,7 +7,7 @@ import wasmPack from 'vite-plugin-wasm-pack'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(), vueDevTools(), wasmPack([], ['mon-fs-box'])],
+  plugins: [vue(), vueDevTools(), wasmPack([], ['mon-fs-web-box'])],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

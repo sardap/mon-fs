@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "wasm": "wasm-pack build ../box --target web",
+    "wasm": "wasm-pack build ../web-box --target web",
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
@@ -14,8 +14,8 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "mon-fs-web-box": "file:../web-box/pkg",
     "pinia": "^2.2.2",
-    "vite-plugin-wasm-pack": "^0.1.12",
     "vue": "^3.4.29"
   },
   "devDependencies": {
@@ -33,6 +33,7 @@
     "typescript": "~5.4.0",
     "vite": "^5.3.1",
     "vite-plugin-vue-devtools": "^7.3.1",
+    "vite-plugin-wasm-pack": "^0.1.12",
     "vue-tsc": "^2.0.21"
   }
 }

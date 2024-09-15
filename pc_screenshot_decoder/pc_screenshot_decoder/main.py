@@ -9,7 +9,7 @@ from typing import List, Optional
 from hashlib import md5
 from shutil import rmtree
 
-SCREENSHOT_FOLDER = os.getenv("PC_DEC_SCREENSHOT_FOLDER", "./example/photo")
+SCREENSHOT_FOLDER = os.getenv("PC_DEC_SCREENSHOT_FOLDER", "./example/emu")
 
 WORKING_FOLDER = os.getenv("PC_DEC_WORKING_FOLDER", "./working")
 FONTS_INPUT_FOLDER = os.getenv("PC_DEC_FONTS_FOLDER", "./fonts/input")

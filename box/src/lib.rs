@@ -1,7 +1,6 @@
 #![feature(io_error_more)]
 pub mod box_mon;
 pub mod file_pc;
-pub mod marker_mon;
 pub mod mon_captured_ball;
 pub mod mon_field;
 pub mod mon_gender;
@@ -10,8 +9,6 @@ pub mod mon_name;
 pub mod mon_species;
 pub mod pc;
 use bit_vec::BitVec;
-use file_pc::FilePc;
-use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Default)]
 pub struct BoxMonBitVec(pub BitVec);
@@ -26,16 +23,16 @@ impl Eq for BoxMonBitVec {}
 
 impl BoxMonBitVec {
     pub fn new<T: Into<usize>, J: Into<u64>>(size: T, value: J) -> BoxMonBitVec {
-        let mut x = BitVec::new();
+        let mut bit_vec = BitVec::new();
 
         let size = size.into();
         let value: u64 = value.into();
 
         for i in 0..size {
-            x.push(value & (1 << i as usize) != 0);
+            bit_vec.push(value & (1 << i as usize) != 0);
         }
 
-        BoxMonBitVec(x)
+        BoxMonBitVec(bit_vec)
     }
 
     pub fn new_from_raw(raw: &[u8]) -> BoxMonBitVec {
@@ -49,7 +46,7 @@ impl BoxMonBitVec {
     }
 
     pub fn to_raw(&self) -> Vec<u8> {
-        let mut raw = Vec::new();
+        let mut raw = Vec::with_capacity((self.0.len() + 7) / 8);
         let mut byte = 0;
         let mut bit = 0;
         for i in 0..self.0.len() {
@@ -64,6 +61,10 @@ impl BoxMonBitVec {
             }
         }
 
+        if bit != 0 {
+            raw.push(byte);
+        }
+
         raw
     }
 
@@ -72,59 +73,29 @@ impl BoxMonBitVec {
     }
 
     pub fn as_u8(&self) -> u8 {
-        let mut x = 0;
+        let mut result = 0;
         for i in 0..self.0.len() {
             if self.0[i] {
-                x |= 1 << i;
+                result |= 1 << i;
             }
         }
-        x
+        result
     }
 
-    pub fn as_u16(&self) -> u16 {
-        let mut x = 0;
-        for i in 0..self.0.len() {
-            if self.0[i] {
-                x |= 1 << i;
-            }
-        }
-        x
-    }
-
+    #[cfg(test)]
     pub fn as_u64(&self) -> u64 {
-        let mut x = 0;
+        let mut result = 0;
         for i in 0..self.0.len() {
             if self.0[i] {
-                x |= 1 << i;
+                result |= 1 << i;
             }
         }
-        x
+        result
     }
 }
 
 pub fn count_to_bits(n: usize) -> usize {
     (n as f64).log2().floor() as usize
-}
-
-#[wasm_bindgen]
-pub fn encode_file(existing_pc: String, filename: String, to_encode: Vec<u8>) -> String {
-    let mut pc: pc::PC = serde_json::from_str(&existing_pc).unwrap();
-
-    while pc.mons.len() < pc::NUM_OF_MONS {
-        pc.mons.push(None);
-    }
-
-    let mut file_pc = if let Some(file_pc) = FilePc::new_from_pc(pc) {
-        file_pc
-    } else {
-        FilePc::new()
-    };
-
-    file_pc.add_file_raw(&filename, &to_encode);
-
-    let pc: pc::PC = file_pc.into();
-
-    serde_json::to_string(&pc).unwrap()
 }
 
 #[cfg(test)]

@@ -40,3 +40,50 @@ a,
   justify-content: center;
   align-items: center;
 }
+
+.pc-grid-container {
+  display: grid;
+  grid-template-columns: repeat(6, 130px);
+  gap: 0px;
+}
+
+.box-mon {
+  border: 5px solid orange;
+  text-align: center;
+  width: 100%;
+}
+
+.pc-view {
+  max-width: 900px;
+}
+
+.box-header {
+  text-align: center;
+  width: 100%;
+}
+
+.box-header button {
+  width: 100px;
+  height: 50px;
+  margin: 10px;
+  font-size: medium;
+}
+
+hr {
+  display: block;
+  height: 5px;
+  border: 0;
+  border-top: 5px solid #dfc5c4;
+  margin: 1em 0;
+  padding: 0;
+}
+
+.error {
+  color: darkred;
+  font-weight: bold;
+  font-size: large;
+}
+
+button:hover {
+  cursor: pointer;
+}

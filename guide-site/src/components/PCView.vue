@@ -26,20 +26,4 @@ function changeBox(delta: number) {
   </div>
 </template>
 
-<style scoped>
-.pc-view {
-  max-width: 900px;
-}
-
-.box-header {
-  text-align: center;
-  width: 100%;
-}
-
-.box-header button {
-  width: 100px;
-  height: 50px;
-  margin: 10px;
-  font-size: medium;
-}
-</style>
+<style scoped></style>

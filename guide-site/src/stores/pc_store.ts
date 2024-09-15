@@ -1,4 +1,4 @@
-import type { BoxMon, WebBoxMon } from '@/pc'
+import { BOX_COUNT, type BoxMon, type WebBoxMon } from '@/pc'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -168,6 +168,29 @@ export const usePcStore = defineStore('pc', () => {
     return mons.value.length
   }
 
+  function addMon() {
+    mons.value.push({
+      species: 'POOCHYENA',
+      gender: 'Male',
+      name: 'aaaaaaaaaa',
+      held_item: '',
+      caught: false,
+      holding_item: false,
+      index: mons.value.length
+    })
+  }
+
+  function removeMon() {
+    mons.value.pop()
+  }
+
+  function lastBox() {
+    return Math.min(
+      Math.ceil(mons.value.length / 30) + Number(mons.value.length % 30 == 0),
+      BOX_COUNT
+    )
+  }
+
   return {
     mons,
     currentBox,
@@ -177,6 +200,9 @@ export const usePcStore = defineStore('pc', () => {
     neededMonsBox,
     filledMonCount,
     setMons,
-    toggleCaught
+    toggleCaught,
+    addMon,
+    removeMon,
+    lastBox
   }
 })

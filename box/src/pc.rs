@@ -5,28 +5,22 @@ use bit_vec::BitVec;
 use serde_derive::{Deserialize, Serialize};
 
 const PC_BOX_SIZE: usize = 30;
-
-#[derive(Debug)]
-pub enum PcMonStringMonParseError {
-    BoxMonParseError(crate::box_mon::StringMonParseError),
-    MarkerMonParseError(crate::marker_mon::StringMonParseError),
-}
-
 const NUM_PC_BOXES: usize = 14;
-
 pub const NUM_OF_MONS: usize = PC_BOX_SIZE * NUM_PC_BOXES;
+const NUM_OF_DATA_MONS: usize = NUM_OF_MONS - 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PC {
-    pub mons: Vec<Option<BoxMon>>,
+    mons: Vec<Option<BoxMon>>,
     #[serde(skip)]
     pub current_read_offset: usize,
-    // TODO turn the whole PC into a fat bit array and cache it
+    #[serde(skip)]
+    pub raw_cache: Option<BoxMonBitVec>,
 }
 
 impl BitCount for PC {
     fn bit_count() -> usize {
-        return BoxMon::bit_count() * NUM_OF_MONS;
+        return (BoxMon::byte_count() * NUM_OF_DATA_MONS) * 8;
     }
 }
 
@@ -35,6 +29,13 @@ impl PC {
         PC {
             mons: vec![None; NUM_OF_MONS],
             current_read_offset: 0,
+            raw_cache: None,
+        }
+    }
+
+    pub fn fill_empty_mon_slots(&mut self) {
+        while self.mons.len() < NUM_OF_MONS {
+            self.mons.push(None);
         }
     }
 
@@ -67,6 +68,7 @@ impl PC {
     pub fn set_mon(&mut self, box_index: usize, mon_index: usize, mon: BoxMon) {
         let index = box_index * PC_BOX_SIZE + mon_index;
         self.mons[index] = Some(mon);
+        self.raw_cache = None;
     }
 
     fn get_empty_offset(&self) -> usize {
@@ -79,28 +81,38 @@ impl PC {
         return self.mons.len() - 1;
     }
 
-    pub fn get_data(&self) -> Vec<u8> {
-        let last_mon_index = self.get_empty_offset();
-        let mut fat: BitVec = BitVec::new();
-        for i in 1..last_mon_index + 1 {
-            // Skip the padding mon
-            match self.mons[i] {
-                Some(mon) => {
-                    let bits = mon.game_value_to_bits().unwrap();
-                    if i == last_mon_index - 1 {
-                        let padding_amount = self.get_padding_amount();
-                        for i in 0..BoxMon::bit_count() - padding_amount as usize {
-                            fat.push(bits.0[i]);
+    fn get_data(&mut self) -> &BoxMonBitVec {
+        if self.raw_cache.is_none() {
+            let last_mon_index = self.get_empty_offset();
+            let mut fat: BitVec = BitVec::new();
+            for i in 1..last_mon_index + 1 {
+                // Skip the padding mon
+                match self.mons[i] {
+                    Some(mon) => {
+                        let bits = mon.game_value_to_bits().unwrap();
+                        if i == last_mon_index - 1 {
+                            let padding_amount = self.get_padding_amount();
+                            for i in 0..BoxMon::bit_count() - padding_amount as usize {
+                                fat.push(bits.0[i]);
+                            }
+                        } else {
+                            fat.extend(bits.0);
                         }
-                    } else {
-                        fat.extend(bits.0);
                     }
+                    None => break,
                 }
-                None => break,
             }
+
+            self.raw_cache = Some(BoxMonBitVec(fat));
         }
 
-        BoxMonBitVec(fat).to_raw()
+        self.raw_cache.as_ref().unwrap()
+    }
+
+    pub fn remaining_bytes(&self) -> usize {
+        let current_offset = self.get_empty_offset();
+        let remaining_bytes = (NUM_OF_DATA_MONS - (current_offset - 1)) * BoxMon::byte_count();
+        remaining_bytes
     }
 }
 
@@ -113,17 +125,18 @@ impl std::io::Write for PC {
         let mut offset = 0;
 
         let mut current_offset = self.get_empty_offset();
-        let remaining_bytes = (self.mons.len() - current_offset) * BoxMon::byte_count();
-        if remaining_bytes < buf.len() {
+        if self.remaining_bytes() < buf.len() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidInput,
                 format!(
                     "Not enough space in PC have {} need {}",
-                    remaining_bytes,
+                    self.remaining_bytes(),
                     buf.len()
                 ),
             ));
         }
+
+        self.raw_cache = None;
 
         if current_offset > 1 {
             let padding_amount = self.get_padding_amount();
@@ -180,33 +193,12 @@ impl std::io::Write for PC {
 
 impl std::io::Read for PC {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let last_mon_index = self.get_empty_offset();
+        let current_read_offset = self.current_read_offset;
+        let data = self.get_data();
 
-        // Translate offsets to bits
-        // Turn whole PC into a fat bit array
-        let mut fat: BitVec = BitVec::new();
-        for i in 1..last_mon_index + 1 {
-            // Skip the padding mon
-            match self.mons[i] {
-                Some(mon) => {
-                    let bits = mon.game_value_to_bits().unwrap();
-                    if i == last_mon_index - 1 {
-                        let padding_amount = self.get_padding_amount();
-                        for i in 0..BoxMon::bit_count() - padding_amount as usize {
-                            fat.push(bits.0[i]);
-                        }
-                    } else {
-                        fat.extend(bits.0);
-                    }
-                }
-                None => break,
-            }
-        }
+        let end = (current_read_offset + buf.len()).min(data.0.len());
 
-        let fat = BoxMonBitVec(fat);
-        let end = (self.current_read_offset + buf.len()).min(fat.0.len());
-
-        let fat = fat.chunk(self.current_read_offset * 8, end * 8);
+        let fat = data.chunk(current_read_offset * 8, end * 8);
         let fat = fat.to_raw();
 
         for i in 0..fat.len() {
@@ -226,7 +218,7 @@ mod test {
     use std::io::Write;
 
     #[test]
-    fn test_write_arbitrary_data_to_pc() {
+    fn write_arbitrary_data_to_pc() {
         let mut pc = PC::new();
 
         let huge_amount_of_data = include_bytes!("../../test_assets/ricky.webp").to_vec();
@@ -242,5 +234,28 @@ mod test {
     #[test]
     fn ensure_normal_amount_of_bits() {
         assert_eq!(PC::bit_count() % 8, 0);
+    }
+
+    #[test]
+    fn byte_count_accuracy() {
+        let pc = PC::new();
+        assert_eq!(PC::byte_count(), pc.remaining_bytes());
+    }
+
+    #[test]
+    fn completely_fill_pc() {
+        let mut pc = PC::new();
+
+        let mut data = vec![0; PC::byte_count()];
+        for i in 0..data.len() {
+            data[i] = (i % 255) as u8;
+        }
+
+        pc.write(&data).unwrap();
+
+        let mut buf = Vec::new();
+        pc.read_to_end(&mut buf).unwrap();
+
+        assert_eq!(data, buf);
     }
 }

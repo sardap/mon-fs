@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type BoxMon, type WebBoxMon } from '@/pc'
+import { type WebBoxMon } from '@/pc'
 import { usePcStore } from '@/stores/pc_store'
 import { ref } from 'vue'
 
@@ -15,14 +15,6 @@ const height = 5
 const visibleMons = ref<WebBoxMon[]>(
   pcStore.mons.slice(offset, offset + width * height).filter((mon) => mon)
 )
-
-function imageForMon(mon: BoxMon) {
-  return `/gfx/mons/${mon.species.toLowerCase()}.png`
-}
-
-function imageForItem(item: string) {
-  return `/gfx/items/${item.replace('.', '-')}.png`
-}
 
 function itemClicked(mon: WebBoxMon) {
   if (mon.caught && mon.held_item !== '') {
@@ -54,7 +46,7 @@ function monItemClass(mon: WebBoxMon) {
 </script>
 
 <template>
-  <div class="grid-container">
+  <div class="pc-grid-container">
     <div
       v-for="mon in visibleMons"
       :key="mon.index"
@@ -73,11 +65,15 @@ function monItemClass(mon: WebBoxMon) {
               :alt="mon.gender"
             />
           </p>
-          <img :src="imageForMon(mon)" :alt="mon.name" class="mon-img" />
+          <img
+            :src="`/gfx/mons/${mon.species.toLowerCase()}.png`"
+            :alt="mon.name"
+            class="mon-img"
+          />
         </div>
         <div class="item-part" @click="itemClicked(mon)" :class="monItemClass(mon)">
           <p>{{ mon.held_item }}</p>
-          <img v-if="mon.held_item" :src="imageForItem(mon.held_item)" />
+          <img v-if="mon.held_item" :src="`/gfx/items/${mon.held_item.replace('.', '-')}.png`" />
         </div>
       </div>
     </div>
@@ -87,12 +83,6 @@ function monItemClass(mon: WebBoxMon) {
 <style scoped>
 .mon-name {
   font-family: 'Courier New', Courier, monospace;
-}
-
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(6, 150px);
-  gap: 0px;
 }
 
 .clickable:hover {

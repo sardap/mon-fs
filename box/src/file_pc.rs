@@ -19,23 +19,17 @@ pub struct PcFile {
 pub const COMPRESSION_LEVEL: Compression = Compression::best();
 
 impl PcFile {
-    pub fn new(name: &str, data: &[u8]) -> PcFile {
+    pub fn new(name: &str, data: Vec<u8>) -> PcFile {
         let mut e = ZlibEncoder::new(Vec::new(), COMPRESSION_LEVEL);
         e.write_all(&data).unwrap();
         let compressed_data = e.finish().unwrap();
 
         let compressed = compressed_data.len() < data.len();
 
-        let data = if compressed {
-            compressed_data
-        } else {
-            data.to_vec()
-        };
-
         PcFile {
             name: name.to_string(),
             attributes: if compressed { 0x01 } else { 0x00 },
-            data,
+            data: if compressed { compressed_data } else { data },
         }
     }
 
@@ -43,16 +37,20 @@ impl PcFile {
         self.attributes & 0x01 == 0x01
     }
 
-    pub fn write_to_folder(&self, folder: &PathBuf) {
-        // This is shit but I don't care
-        let data = if self.is_compressed() {
+    pub fn get_data(&self) -> Vec<u8> {
+        if self.is_compressed() {
             let mut d = ZlibDecoder::new(&self.data[..]);
             let mut data = Vec::new();
             d.read_to_end(&mut data).unwrap();
             data
         } else {
             self.data.clone()
-        };
+        }
+    }
+
+    pub fn write_to_folder(&self, folder: &PathBuf) {
+        // This is shit but I don't care
+        let data = self.get_data();
 
         let file_path = folder.clone().join(&self.name);
         let mut file = if file_path.exists() {
@@ -97,13 +95,20 @@ impl FilePc {
             Err(err) => return Err(err),
         };
 
-        self.add_file_raw(name, &data);
-
-        Ok(())
+        self.add_file_raw(name, data)
     }
 
-    pub fn add_file_raw(&mut self, name: &str, data: &[u8]) {
+    pub fn add_file_raw(&mut self, name: &str, data: Vec<u8>) -> Result<(), io::Error> {
+        if self.files.iter().any(|f| f.name == name) {
+            return Err(io::Error::new(
+                io::ErrorKind::AlreadyExists,
+                format!("File with name {} already exists", name),
+            ));
+        }
+
         self.files.push(PcFile::new(name, data));
+
+        Ok(())
     }
 
     pub fn write_to_folder(&self, folder: &PathBuf) {

@@ -75,8 +75,7 @@ where
             return Err(ToGameValueError::BadBitsLength);
         }
 
-        let x = value.as_u8();
-        match Self::from_repr(x) {
+        match Self::from_repr(value.as_u8()) {
             Some(value) => Ok(value),
             None => Err(ToGameValueError::BitsValueOutOfRange),
         }

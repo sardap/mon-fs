@@ -5,7 +5,8 @@ import NeededMons from './components/NeededMons.vue'
 import { usePcStore } from './stores/pc_store'
 import NeededItems from '@/components/NeededItems.vue'
 import FreePCSpace from '@/components/FreePCSpace.vue'
-import init, { encode_file } from 'mon-fs-box'
+import init, { encode_file } from 'mon-fs-web-box'
+import DecodeView from './components/DecodeView.vue'
 
 const pcStore = usePcStore()
 
@@ -21,10 +22,11 @@ const monCount = computed(() => pcStore.filledMonCount)
 
 const error = ref('')
 const loading = ref(false)
+const encodeMode = ref(true)
 
 const itemsOnlyCurrentBox = ref(true)
 
-function handleBinaryFile(event: Event) {
+function encodeBinaryFile(event: Event) {
   if (!event.target) {
     return
   }
@@ -46,17 +48,16 @@ function handleBinaryFile(event: Event) {
     }
 
     const pc_json = JSON.stringify({ mons: pcStore.mons })
-    console.log('Encoded PC')
+
+    console.log(file.name)
 
     try {
-      console.log('Encoding file')
       const json_str = encode_file(pc_json, file.name, uint8Array)
       const pc = JSON.parse(json_str)
-      console.log('decoded response')
       pcStore.setMons(pc.mons)
     } catch (e) {
       console.error(e)
-      error.value = 'Error encoding file too large.'
+      error.value = 'Error encoding file too large or duplicated file name.'
     } finally {
       loading.value = false
     }
@@ -119,68 +120,83 @@ function savePC() {
   </header>
 
   <main>
-    <h2>Upload data</h2>
-    <p class="file-info">
-      Files under 3.2KB are guaranteed to work anything over might compress might not.
-    </p>
-    <div class="row-container centered file-options">
-      <div>
-        <p>Upload existing PC guide file</p>
-        <input type="file" id="fileInput" accept=".json" @change="(file) => handlePcFile(file)" />
-      </div>
-      <div>
-        <p>Add a file to existing PC</p>
-        <input type="file" id="fileInput" @change="(file) => handleBinaryFile(file)" />
-      </div>
-      <div>
-        <p>Clear PC</p>
-        <button @click="clearPc()">Clear</button>
-      </div>
-    </div>
-    <p class="error" v-if="error">{{ error }}</p>
-    <hr />
     <div>
-      <FreePCSpace :mon-count="monCount()" />
-    </div>
-    <div class="pc-empty" v-if="loading">Crunching the numbers</div>
-    <div v-else-if="pcStore.mons.length > 0" class="wrapper">
-      <PC />
-      <div>
-        <h2>Need List</h2>
-        <div class="item-box-selector">
-          <input
-            id="items-current-box"
-            name="items-current-box"
-            type="checkbox"
-            v-model="itemsOnlyCurrentBox"
-          />
-          <label for="items-current-box">Only show items for current box</label>
-        </div>
-        <div class="list-wrapper">
-          <div>
-            <NeededItems v-if="!itemsOnlyCurrentBox" :neededItems="neededItemsAll()" />
-            <NeededItems v-else :neededItems="neededItemsBox()" />
-          </div>
-          <div>
-            <NeededMons v-if="!itemsOnlyCurrentBox" :neededMons="neededMonsAll()" />
-            <NeededMons v-else :neededMons="neededMonsBox()" />
-          </div>
-        </div>
-      </div>
-    </div>
-    <div v-else class="pc-empty">
-      <p>PC is empty</p>
-    </div>
-    <hr />
-    <div>
-      <button class="save-button" :disabled="pcStore.mons.length === 0" @click="savePC">
-        Save to the Big PC
+      <h2>{{ encodeMode ? `Encode data` : `Decode Data` }}</h2>
+      <button @click="encodeMode = !encodeMode">
+        Switch to {{ encodeMode ? `Decode` : `Encode` }} mode
       </button>
     </div>
-    <br />
-    <div>
-      <h2>Decoding</h2>
-      <p>To decode a mon-fs you will need to follow the guide on the repo linked on my github.</p>
+    <div class="body">
+      <div v-if="encodeMode">
+        <p class="file-info">
+          Files under 3.2KB are guaranteed to work anything over might compress might not.
+        </p>
+        <div class="row-container centered file-options">
+          <div>
+            <p>Upload existing PC guide file</p>
+            <input
+              type="file"
+              id="fileInput"
+              accept=".json"
+              @change="(file) => handlePcFile(file)"
+            />
+          </div>
+          <div>
+            <p>Add a file to existing PC</p>
+            <input type="file" id="fileInput" @change="(file) => encodeBinaryFile(file)" />
+          </div>
+          <div>
+            <p>Clear PC</p>
+            <button @click="clearPc()">Clear</button>
+          </div>
+        </div>
+        <p class="error" v-if="error">{{ error }}</p>
+        <hr />
+        <div>
+          <FreePCSpace :mon-count="monCount()" />
+        </div>
+        <div class="pc-empty" v-if="loading">Crunching the numbers</div>
+        <div v-else-if="pcStore.mons.length > 0" class="wrapper">
+          <PC />
+          <div>
+            <h2>Need List</h2>
+            <div class="item-box-selector">
+              <input
+                id="items-current-box"
+                name="items-current-box"
+                type="checkbox"
+                v-model="itemsOnlyCurrentBox"
+              />
+              <label for="items-current-box">Only show items for current box</label>
+            </div>
+            <div class="list-wrapper">
+              <div>
+                <NeededItems v-if="!itemsOnlyCurrentBox" :neededItems="neededItemsAll()" />
+                <NeededItems v-else :neededItems="neededItemsBox()" />
+              </div>
+              <div>
+                <NeededMons v-if="!itemsOnlyCurrentBox" :neededMons="neededMonsAll()" />
+                <NeededMons v-else :neededMons="neededMonsBox()" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="pc-empty">
+          <p>PC is empty</p>
+        </div>
+        <hr />
+        <div>
+          <button class="save-button" :disabled="pcStore.mons.length === 0" @click="savePC">
+            Save to the Big PC
+          </button>
+        </div>
+        <br />
+      </div>
+      <div v-else>
+        <div>
+          <DecodeView />
+        </div>
+      </div>
     </div>
   </main>
 
@@ -205,15 +221,6 @@ main {
   min-height: 1200px;
 }
 
-hr {
-  display: block;
-  height: 5px;
-  border: 0;
-  border-top: 5px solid #dfc5c4;
-  margin: 1em 0;
-  padding: 0;
-}
-
 .wrapper {
   display: grid;
   grid-template-columns: 900px auto;
@@ -230,6 +237,10 @@ hr {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+  }
+
+  .list-wrapper {
+    grid-template-columns: 300px 300px;
   }
 }
 
@@ -260,12 +271,6 @@ header {
   place-items: center;
   place-content: center;
   height: 800px;
-}
-
-.error {
-  color: darkred;
-  font-weight: bold;
-  font-size: large;
 }
 
 .file-options div {
