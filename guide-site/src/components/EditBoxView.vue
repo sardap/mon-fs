@@ -52,7 +52,7 @@ function invertGender(mon: WebBoxMon) {
             <button @click="invertGender(mon)">
               <img
                 class="mon-gender"
-                :src="`/gfx/genders/${mon.gender.toLowerCase()}.png`"
+                :src="`gfx/genders/${mon.gender.toLowerCase()}.png`"
                 :alt="mon.gender"
               />
             </button>
@@ -64,7 +64,7 @@ function invertGender(mon: WebBoxMon) {
           </select>
           <img
             :key="mon.species"
-            :src="`/gfx/mons/${mon.species.toLowerCase()}.png`"
+            :src="`gfx/mons/${mon.species.toLowerCase()}.png`"
             :alt="mon.species"
             class="mon-img"
           />
@@ -74,7 +74,7 @@ function invertGender(mon: WebBoxMon) {
             {{ item }}
           </option>
         </select>
-        <img v-if="mon.held_item" :src="`/gfx/items/${mon.held_item.replace('.', '-')}.png`" />
+        <img v-if="mon.held_item" :src="`gfx/items/${mon.held_item.replace('.', '-')}.png`" />
       </div>
     </div>
     <div v-if="visibleMons.length < 30" class="box-mon add-remove">

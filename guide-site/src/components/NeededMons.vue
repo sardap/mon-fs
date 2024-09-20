@@ -10,9 +10,9 @@ defineProps<{ neededMons: { species: string; gender: string; count: number }[] }
         :key="`${mon.species}_${mon.gender}`"
         class="row-container centered"
       >
-        <img class="mon-img" :src="`/gfx/mons/${mon.species.toLowerCase()}.png`" />
+        <img class="mon-img" :src="`gfx/mons/${mon.species.toLowerCase()}.png`" />
         {{ mon.species }}
-        <img class="mon-gender" :src="`/gfx/genders/${mon.gender.toLowerCase()}.png`" />
+        <img class="mon-gender" :src="`gfx/genders/${mon.gender.toLowerCase()}.png`" />
         <p>: {{ mon.count }}</p>
       </div>
     </div>

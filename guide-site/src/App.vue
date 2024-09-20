@@ -47,7 +47,7 @@ function encodeBinaryFile(event: Event) {
       return
     }
 
-    const pc_json = JSON.stringify({ mons: pcStore.mons })
+    const pc_json = pcStore.pcJson()
 
     console.log(file.name)
 
@@ -102,9 +102,7 @@ function clearPc() {
 
 function savePC() {
   let a = window.document.createElement('a')
-  a.href = window.URL.createObjectURL(
-    new Blob([JSON.stringify({ mons: pcStore.mons })], { type: 'text/json' })
-  )
+  a.href = window.URL.createObjectURL(new Blob([pcStore.pcJson()], { type: 'text/json' }))
   a.download = 'pc.json'
 
   document.body.appendChild(a)

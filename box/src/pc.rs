@@ -11,11 +11,11 @@ const NUM_OF_DATA_MONS: usize = NUM_OF_MONS - 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PC {
-    mons: Vec<Option<BoxMon>>,
+    pub mons: Vec<Option<BoxMon>>,
     #[serde(skip)]
-    pub current_read_offset: usize,
+    current_read_offset: usize,
     #[serde(skip)]
-    pub raw_cache: Option<BoxMonBitVec>,
+    raw_cache: Option<BoxMonBitVec>,
 }
 
 impl BitCount for PC {

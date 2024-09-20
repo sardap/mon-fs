@@ -24,7 +24,10 @@ pub fn encode_file(existing_pc: String, filename: String, to_encode: Vec<u8>) ->
 
 #[wasm_bindgen]
 pub fn decode_file(existing_pc: String) -> Vec<u8> {
-    let pc: PC = serde_json::from_str(&existing_pc).unwrap();
+    let mut pc: PC = serde_json::from_str(&existing_pc).unwrap();
+
+    pc.fill_empty_mon_slots();
+
     let file_pc = FilePc::new_from_pc(pc).unwrap();
 
     let mut result = Vec::new();
@@ -52,7 +55,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn file_encode_file() {
+    fn file_encode_decode_files() {
         const FILE_COUNT: usize = 8;
 
         let mut data_chunk = vec![0; PC::byte_count() / 10];
@@ -78,6 +81,8 @@ mod test {
         let pc = mon_fs_box::file_pc::FilePc::new_from_pc(pc).unwrap();
 
         assert_eq!(pc.files.len(), FILE_COUNT);
+
+        decode_file(pc_json);
     }
 
     #[test]

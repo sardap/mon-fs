@@ -24,6 +24,10 @@ export const usePcStore = defineStore('pc', () => {
     })
   }
 
+  function pcJson() {
+    return JSON.stringify({ mons: mons.value })
+  }
+
   function neededItemsAll() {
     const tally: Record<string, { count: number; first_index: number }> = {}
 
@@ -203,6 +207,7 @@ export const usePcStore = defineStore('pc', () => {
     toggleCaught,
     addMon,
     removeMon,
-    lastBox
+    lastBox,
+    pcJson
   }
 })

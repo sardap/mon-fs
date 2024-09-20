@@ -61,19 +61,15 @@ function monItemClass(mon: WebBoxMon) {
             {{ mon.name }}
             <img
               class="mon-gender"
-              :src="`/gfx/genders/${mon.gender.toLowerCase()}.png`"
+              :src="`gfx/genders/${mon.gender.toLowerCase()}.png`"
               :alt="mon.gender"
             />
           </p>
-          <img
-            :src="`/gfx/mons/${mon.species.toLowerCase()}.png`"
-            :alt="mon.name"
-            class="mon-img"
-          />
+          <img :src="`gfx/mons/${mon.species.toLowerCase()}.png`" :alt="mon.name" class="mon-img" />
         </div>
         <div class="item-part" @click="itemClicked(mon)" :class="monItemClass(mon)">
           <p>{{ mon.held_item }}</p>
-          <img v-if="mon.held_item" :src="`/gfx/items/${mon.held_item.replace('.', '-')}.png`" />
+          <img v-if="mon.held_item" :src="`gfx/items/${mon.held_item.replace('.', '-')}.png`" />
         </div>
       </div>
     </div>

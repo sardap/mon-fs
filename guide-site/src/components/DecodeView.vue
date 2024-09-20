@@ -14,10 +14,9 @@ function changeBox(delta: number) {
 
 function decodeButton() {
   error.value = ''
-  const pc_json = JSON.stringify({ mons: pcStore.mons })
   let raw: Uint8Array
   try {
-    raw = decode_file(pc_json)
+    raw = decode_file(pcStore.pcJson())
   } catch (e) {
     console.error(e)
     error.value = 'Error decoding input check everything is correct'

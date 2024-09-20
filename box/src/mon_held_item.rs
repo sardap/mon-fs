@@ -30,7 +30,7 @@ pub enum BoxMonHeldItem {
     ParlyzHeal,
     PokeBall,
     Potion,
-    Protein,
+    NestBall,
     Repel,
     RevivalHerb,
     Revive,
@@ -52,7 +52,7 @@ impl ToString for BoxMonHeldItem {
             BoxMonHeldItem::Awakening => "Awakening".to_string(),
             BoxMonHeldItem::BurnHeal => "Burn Heal".to_string(),
             BoxMonHeldItem::DireHit => "Dire Hit".to_string(),
-            BoxMonHeldItem::EnergyPower => "Energy Powder".to_string(),
+            BoxMonHeldItem::EnergyPower => "Energypowder".to_string(),
             BoxMonHeldItem::EnergyRoot => "Energy Root".to_string(),
             BoxMonHeldItem::EscapeRope => "Escape Rope".to_string(),
             BoxMonHeldItem::FluffyTail => "Fluffy Tail".to_string(),
@@ -66,9 +66,9 @@ impl ToString for BoxMonHeldItem {
             BoxMonHeldItem::MaxPotion => "Max Potion".to_string(),
             BoxMonHeldItem::MaxRepel => "Max Repel".to_string(),
             BoxMonHeldItem::ParlyzHeal => "Parlyz Heal".to_string(),
-            BoxMonHeldItem::PokeBall => "Poke Ball".to_string(),
+            BoxMonHeldItem::PokeBall => "Poké Ball".to_string(),
             BoxMonHeldItem::Potion => "Potion".to_string(),
-            BoxMonHeldItem::Protein => "Protein".to_string(),
+            BoxMonHeldItem::NestBall => "Nest Ball".to_string(),
             BoxMonHeldItem::Repel => "Repel".to_string(),
             BoxMonHeldItem::RevivalHerb => "Revival Herb".to_string(),
             BoxMonHeldItem::Revive => "Revive".to_string(),
@@ -106,7 +106,7 @@ impl<'de> Deserialize<'de> for BoxMonHeldItem {
             "Awakening" => Ok(BoxMonHeldItem::Awakening),
             "Burn Heal" => Ok(BoxMonHeldItem::BurnHeal),
             "Dire Hit" => Ok(BoxMonHeldItem::DireHit),
-            "Energy Powder" => Ok(BoxMonHeldItem::EnergyPower),
+            "Energypowder" => Ok(BoxMonHeldItem::EnergyPower),
             "Energy Root" => Ok(BoxMonHeldItem::EnergyRoot),
             "Escape Rope" => Ok(BoxMonHeldItem::EscapeRope),
             "Fluffy Tail" => Ok(BoxMonHeldItem::FluffyTail),
@@ -120,9 +120,9 @@ impl<'de> Deserialize<'de> for BoxMonHeldItem {
             "Max Potion" => Ok(BoxMonHeldItem::MaxPotion),
             "Max Repel" => Ok(BoxMonHeldItem::MaxRepel),
             "Parlyz Heal" => Ok(BoxMonHeldItem::ParlyzHeal),
-            "Poke Ball" => Ok(BoxMonHeldItem::PokeBall),
+            "Poké Ball" => Ok(BoxMonHeldItem::PokeBall),
             "Potion" => Ok(BoxMonHeldItem::Potion),
-            "Protein" => Ok(BoxMonHeldItem::Protein),
+            "Nest Ball" => Ok(BoxMonHeldItem::NestBall),
             "Repel" => Ok(BoxMonHeldItem::Repel),
             "Revival Herb" => Ok(BoxMonHeldItem::RevivalHerb),
             "Revive" => Ok(BoxMonHeldItem::Revive),
@@ -176,7 +176,8 @@ impl FromStringInput for BoxMonHeldItem {
         mapping.insert("PARLYZHEAL", BoxMonHeldItem::ParlyzHeal);
         mapping.insert("POKEBALL", BoxMonHeldItem::PokeBall);
         mapping.insert("POTION", BoxMonHeldItem::Potion);
-        mapping.insert("PROTEIN", BoxMonHeldItem::Protein);
+        mapping.insert("PROTEIN", BoxMonHeldItem::NestBall);
+        mapping.insert("NESTBALL", BoxMonHeldItem::NestBall);
         mapping.insert("REPEL", BoxMonHeldItem::Repel);
         mapping.insert("REVIVALHERB", BoxMonHeldItem::RevivalHerb);
         mapping.insert("REVIVE", BoxMonHeldItem::Revive);

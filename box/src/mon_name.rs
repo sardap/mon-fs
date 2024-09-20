@@ -360,6 +360,8 @@ mod tests {
 
     #[test]
     fn test_char_to_and_from() {
+        assert_eq!(BoxMonCharacter::possible_values(), 64);
+
         for i in 0..BoxMonCharacter::possible_values() as u8 {
             let starting = BoxMonBitVec::new(BoxMonCharacter::bit_count(), i);
             let box_mon_gender = BoxMonCharacter::bits_to_game_value(&starting).unwrap();
