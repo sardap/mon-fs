@@ -21,6 +21,8 @@ pub fn decode_pc_files(pc: &FilePc, options: &OptionsDecode) -> Result<(), Progr
 
     pc.write_to_folder(decode_path);
 
+    println!("Decoded PC files to: {}", decode_path.display());
+
     Ok(())
 }
 

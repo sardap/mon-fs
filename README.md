@@ -2,6 +2,8 @@
 
 ## What is this
 
+Video on the subject https://www.youtube.com/watch?v=DvCXC-uQSik
+
 Have you ever wanted to use your Pokemon Emerald PC to store a tiny amount of data at incredibly slow and inconvenient read and write speeds?
 
 Well look no further!
