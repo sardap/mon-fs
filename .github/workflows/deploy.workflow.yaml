@@ -19,7 +19,7 @@ jobs:
           npm run wasm
           npm run build
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@v4.6.4
         with:
           folder: guide-site/dist
           clean: true
