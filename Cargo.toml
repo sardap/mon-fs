@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["box", "mon-fs", "web-box", "wild"]
+members = ["box", "mon-fs", "web-box"]
 
 default-members = ["mon-fs"]
 

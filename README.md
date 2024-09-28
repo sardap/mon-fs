@@ -204,7 +204,7 @@ Level is a difficult one since there are two methods of getting pokemon at a lev
 
 Catching at a level: on route 116 WHISMUR is only available at level 6 kill any possibility for the catching route. Additionally the probability is different for example it's only 4% to to find a level 8 POOCHYENA.
 
-Training: This seems great they are all at least level 6 with some light elbow greese or a lot of rare candies from pickup.
+Training: This seems great they are all at least level 6 with some light elbow grease or a lot of rare candies from pickup.
 
 Take this level table assuming 6 is our base since all pokemon on route 116 we care about can be found at level 6.
 | Level Range | bits | Max candies required |
