@@ -322,3 +322,9 @@ Using OpenCV to read the screenshots is very straight forward split up the sprit
 Then slice up the screenshots into the field sections. Template match on the expected font do some basic sanity checks and your golden.
 
 We now have all the fields in a nice json that can be parsed and turned into the rust enums that can be mapped back into a bit vector which can be turned into a byte array.
+
+### Performance
+
+From my tests it writes at about 0.00000000625 MB/S which is about 0.5 Bits per second.
+
+The data costs are $68,571,429 AUD per GB.
