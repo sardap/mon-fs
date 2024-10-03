@@ -299,7 +299,7 @@ Out of the 8 somewhat viable fields available I selected
 
 This leaves us with 68 bits per pokemon.
 
-#### Encoding data into the PC
+### Encoding data into the PC
 
 Unfortunately we can't use every slot in the PC.
 
@@ -313,18 +313,192 @@ This leaves us with (419 \* 68) - 4 = 28488 usable bits or 3.561KB.
 
 **With easy expansions** With the easy expansion of mark and ball type it could be increased to (419 \* 75) - 3 = 31422 usable bits brining it up to 3.927KB.
 
-### Decoding data from the PC
+### Writing the data into the PC
 
-The difficulty in decoding comes from reading the data. We can't just directly read from the game because where is the sport in that?
+How to catch, name and organise all the pokemon in the PC in the exact slots they need to be?
 
-Using OpenCV to read the screenshots is very straight forward split up the sprite sheet for the fonts into pngs. Then use those images as templates.
+#### Squeezing more out of the 3.5KB
 
-Then slice up the screenshots into the field sections. Template match on the expected font do some basic sanity checks and your golden.
+Writing 3.5KB raw is fine but lot's of text compressing great. To take advantage of that the following struct is encoded and stored instead
 
-We now have all the fields in a nice json that can be parsed and turned into the rust enums that can be mapped back into a bit vector which can be turned into a byte array.
+```rs
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FilePc {
+    pub files: Vec<PcFile>,
+}
+```
+
+With PC files looking like this:
+
+```rs
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PcFile {
+    pub name: String,
+    pub attributes: u8,
+    pub data: Vec<u8>,
+}
+```
+
+Whenever a new PCFile is created it will encode the data using `flate2` `ZlibEncoder` at the best compression level. If the compressed data is smaller than the raw data it sets the compressed flag in the attributes (which is just the first bit). It will then set data to the compressed version.
+
+The traits `std::io::Write` and `std::io::Read` are both implemented by the `PC` allowing for a huge amount of writing functions to be used.
+
+This makes writing the serialised `FilePC` struct using `bincode` very easy.
+
+```rs
+    pub fn as_pc(&self) -> Result<PC, std::io::Error> {
+        let encoded = bincode::serialize(&self).unwrap();
+
+        let mut pc = PC::new();
+        match pc.write_all(&encoded) {
+            Ok(_) => Ok(pc),
+            Err(err) => Err(err),
+        }
+    }
+```
+
+#### The PC
+
+The PC is represented by this simple struct
+
+```rs
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PC {
+    pub mons: Vec<Option<BoxMon>>,
+    #[serde(skip)]
+    current_read_offset: usize,
+    #[serde(skip)]
+    raw_cache: Option<BoxMonBitVec>,
+}
+```
+
+this is then serialised into `json` which can be read by a human to be followed if you are fully crazy.
+
+```json
+    "mons": [
+        {
+            "species": "POOCHYENA",
+            "gender": "Male",
+            "name": "eaaaaaaaaa",
+            "held_item": ""
+        },
+        {
+            "species": "NINCADA",
+            "gender": "Male",
+            "name": "aaaaaaaaaa",
+            "held_item": "Potion"
+        },
+        {
+            "species": "POOCHYENA",
+            "gender": "Male",
+            "name": "aaaaaaaaai",
+            "held_item": "Hyper Potion"
+        },
+        {
+            "species": "NINCADA",
+            "gender": "Male",
+            "name": "XZmFHMyWgZ",
+            "held_item": ""
+        },
+        // .....
+    ]
+```
+
+This could be followed pretty simple make sure the first slot in the PC has a male POOCHYENA named eaaaaaaaaa holding no item and so on.
+
+### Reading data from the PC
+
+We can't just directly read from the game because where is the sport in that?
+
+Using OpenCV to read the screenshots is very straight forward we can split up the sprite sheets to generate a template for each letter and gender icon.
+
+<p align="center">
+  <img src="./pc_screenshot_decoder/fonts/letters/latin_normal/p.png" width="50">
+  <br />
+  <em>Wow P</em>
+</p>
+
+We then use these are templates to read the lettering on the left.
+
+<p align="center">
+  <img src="./readme/open_cv_read.png" width="300">
+  <br />
+</p>
+
+Why not use OCR? I spent about 3 days messing around OCR over template matching. Since this use case is very odd we are not reading words, it's case sensitive and a single wrong letter the whole read might not work. The flexibility OCR offered over templating was not worth the reliability trade off.
+
+The python script will output a json file with just what it sees.
+
+```json
+{
+  "boxes": [
+    [
+      {
+        "name": "Daaaaaaaaa",
+        "species": "POOCHYENA",
+        "gender": "M",
+        "item": ""
+      },
+      {
+        "name": "aaaaaaaaaa",
+        "species": "NINCADA",
+        "gender": "M",
+        "item": "XACCURACY"
+      },
+      {
+        "name": "aaaaaaaaav",
+        "species": "POOCHYENA",
+        "gender": "M",
+        "item": "HEALPOWlDER"
+      }
+    ]
+  ]
+}
+```
+
+This is slightly different from the PC json since I wanted to keep all the conversion and checking in the rust code. The Python script use opencv to transcript the screenshots no item or sanity checks.
+
+This is then parsed and vaildiated by `mon-fs` CLI program into the `Boxmon` structs to create a PC.
+
+```rs
+#[derive(Debug, Deserialize)]
+struct DecoderOutput {
+    boxes: Vec<Vec<StringsMon>>,
+}
+
+impl TryInto<PC> for DecoderOutput {
+    type Error = StringMonParseError;
+
+    fn try_into(self) -> Result<PC, Self::Error> {
+        let mut pc = PC::new();
+        for (box_index, box_mon) in self.boxes.into_iter().enumerate() {
+            for (mon_index, mon) in box_mon.into_iter().enumerate() {
+                pc.set_mon(
+                    box_index,
+                    mon_index,
+                    match BoxMon::try_from_strings_mon(mon) {
+                        Ok(mon) => mon,
+                        Err(err) => return Err(err),
+                    },
+                );
+            }
+        }
+
+        Ok(pc)
+    }
+}
+```
+
+We then can just use the PC implemnting std::read
+
+### The Guide site
+
+To make it easier to read
+
+The site https://sardap.github.io/mon-fs/ presents the
 
 ### Performance
 
-From my tests it writes at about 0.00000000625 MB/S which is about 0.5 Bits per second.
+From my test of writing 1.9KB took 17922 Seconds giving us a write speed of 0.00084812 Kb/s or 0.84812 Bits per second.
 
 The data costs are $68,571,429 AUD per GB.

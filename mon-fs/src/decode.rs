@@ -1,7 +1,7 @@
 use std::process::Command;
 
 use mon_fs_box::{
-    box_mon::{BoxMon, StringsMon},
+    box_mon::{BoxMon, StringMonParseError, StringsMon},
     file_pc::FilePc,
     pc::PC,
 };
@@ -31,26 +31,25 @@ struct DecoderOutput {
     boxes: Vec<Vec<StringsMon>>,
 }
 
-impl Into<PC> for DecoderOutput {
-    fn into(self) -> PC {
+impl TryInto<PC> for DecoderOutput {
+    type Error = StringMonParseError;
+
+    fn try_into(self) -> Result<PC, Self::Error> {
         let mut pc = PC::new();
-        for box_index in 0..self.boxes.len() {
-            for mon_index in 0..self.boxes[box_index].len() {
-                let mon = StringsMon {
-                    name: self.boxes[box_index][mon_index].name.clone(),
-                    species: self.boxes[box_index][mon_index].species.clone(),
-                    gender: self.boxes[box_index][mon_index].gender.clone(),
-                    item: self.boxes[box_index][mon_index].item.clone(),
-                };
+        for (box_index, box_mon) in self.boxes.into_iter().enumerate() {
+            for (mon_index, mon) in box_mon.into_iter().enumerate() {
                 pc.set_mon(
                     box_index,
                     mon_index,
-                    BoxMon::try_from_strings_mon(mon).unwrap(),
+                    match BoxMon::try_from_strings_mon(mon) {
+                        Ok(mon) => mon,
+                        Err(err) => return Err(err),
+                    },
                 );
             }
         }
 
-        pc
+        Ok(pc)
     }
 }
 
@@ -88,7 +87,7 @@ pub fn load_pc_from_screenshots(options: &OptionsDecode) -> Result<PC, ProgramEr
 
     let output: DecoderOutput = serde_json::from_str(&output).unwrap();
 
-    let pc: PC = output.into();
+    let pc: PC = output.try_into().unwrap();
 
     Ok(pc)
 }

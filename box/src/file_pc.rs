@@ -117,7 +117,7 @@ impl FilePc {
         }
 
         if !folder.is_dir() {
-            panic!("Fuck");
+            panic!("Must be a folder");
         }
 
         for file in &self.files {
