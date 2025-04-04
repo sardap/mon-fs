@@ -19,6 +19,27 @@ pub trait GameSerializer {
         Self: Sized;
 }
 
+impl<T> GameSerializer for T
+where
+    T: BitCount + FromRepresentation + Copy + Sized,
+{
+    fn bits_to_game_value(value: &BoxMonBitVec) -> Result<Self, ToGameValueError> {
+        if value.0.len() != Self::bit_count() {
+            return Err(ToGameValueError::BadBitsLength);
+        }
+
+        match Self::from_repr(value.as_u8()) {
+            Some(value) => Ok(value),
+            None => Err(ToGameValueError::BitsValueOutOfRange),
+        }
+    }
+
+    fn game_value_to_bits(&self) -> Result<BoxMonBitVec, FromGameValueError> {
+        let value = self.to_u8();
+        Ok(BoxMonBitVec::new(Self::bit_count(), value))
+    }
+}
+
 pub trait FromStringInput {
     fn try_from_string(input: &str) -> Option<Self>
     where
@@ -66,31 +87,11 @@ where
     }
 }
 
-impl<T> GameSerializer for T
-where
-    T: BitCount + FromRepresentation + Copy + Sized,
-{
-    fn bits_to_game_value(value: &BoxMonBitVec) -> Result<Self, ToGameValueError> {
-        if value.0.len() != Self::bit_count() {
-            return Err(ToGameValueError::BadBitsLength);
-        }
-
-        match Self::from_repr(value.as_u8()) {
-            Some(value) => Ok(value),
-            None => Err(ToGameValueError::BitsValueOutOfRange),
-        }
-    }
-
-    fn game_value_to_bits(&self) -> Result<BoxMonBitVec, FromGameValueError> {
-        let value = self.to_u8();
-        Ok(BoxMonBitVec::new(Self::bit_count(), value))
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum ToGameValueError {
     BadBitsLength,
     BitsValueOutOfRange,
+    InvalidValue(&'static str),
 }
 
 #[derive(Debug, Clone, Copy)]

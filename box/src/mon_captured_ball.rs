@@ -2,21 +2,21 @@ use serde::{Deserialize, Serialize};
 use strum::{EnumCount, EnumIter};
 use strum_macros::FromRepr;
 
-use crate::mon_field::FromRepresentation;
+use crate::mon_field::{FromRepresentation, FromStringInput};
 
 #[derive(
     FromRepr, Debug, Clone, Copy, EnumCount, EnumIter, PartialEq, Eq, Serialize, Deserialize,
 )]
 #[repr(u8)]
 pub enum BoxMonCapturedBall {
-    ItemDiveBall,
-    ItemGreatBall,
-    ItemNestBall,
-    ItemNetBall,
-    ItemPokeBall,
-    ItemRepeatBall,
-    ItemTimerBall,
-    ItemUltraBall,
+    DiveBall,
+    GreatBall,
+    NestBall,
+    NetBall,
+    PokeBall,
+    RepeatBall,
+    TimerBall,
+    UltraBall,
 }
 
 impl FromRepresentation for BoxMonCapturedBall {
@@ -26,6 +26,25 @@ impl FromRepresentation for BoxMonCapturedBall {
 
     fn to_u8(&self) -> u8 {
         *self as u8
+    }
+}
+
+impl FromStringInput for BoxMonCapturedBall {
+    fn try_from_string(input: &str) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        match input.to_lowercase().as_str() {
+            "dive" => Some(BoxMonCapturedBall::DiveBall),
+            "great" => Some(BoxMonCapturedBall::GreatBall),
+            "nest" => Some(BoxMonCapturedBall::NestBall),
+            "net" => Some(BoxMonCapturedBall::NetBall),
+            "poke" => Some(BoxMonCapturedBall::PokeBall),
+            "repeat" => Some(BoxMonCapturedBall::RepeatBall),
+            "timer" => Some(BoxMonCapturedBall::TimerBall),
+            "ultra" => Some(BoxMonCapturedBall::UltraBall),
+            _ => None,
+        }
     }
 }
 

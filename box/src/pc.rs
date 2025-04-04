@@ -1,5 +1,7 @@
 use crate::box_mon::BoxMon;
-use crate::mon_field::{BitCount, ByteCount, GameSerializer};
+use crate::box_mon_full::BoxMonFull;
+use crate::box_mon_lite::BoxMonLite;
+use crate::mon_field::{BitCount, ByteCount};
 use crate::BoxMonBitVec;
 use bit_vec::BitVec;
 use serde_derive::{Deserialize, Serialize};
@@ -10,22 +12,25 @@ pub const NUM_OF_MONS: usize = PC_BOX_SIZE * NUM_PC_BOXES;
 const NUM_OF_DATA_MONS: usize = NUM_OF_MONS - 2;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct PC {
-    pub mons: Vec<Option<BoxMon>>,
+pub struct PC<T: BoxMon> {
+    pub mons: Vec<Option<T>>,
     #[serde(skip)]
     current_read_offset: usize,
     #[serde(skip)]
     raw_cache: Option<BoxMonBitVec>,
 }
 
-impl BitCount for PC {
+pub type PcLite = PC<BoxMonLite>;
+pub type PcFull = PC<BoxMonFull>;
+
+impl<T: BoxMon> BitCount for PC<T> {
     fn bit_count() -> usize {
-        return (BoxMon::byte_count() * NUM_OF_DATA_MONS) * 8;
+        return (T::byte_count() * NUM_OF_DATA_MONS) * 8;
     }
 }
 
-impl PC {
-    pub fn new() -> PC {
+impl<T: BoxMon> PC<T> {
+    pub fn new() -> PC<T> {
         PC {
             mons: vec![None; NUM_OF_MONS],
             current_read_offset: 0,
@@ -46,11 +51,11 @@ impl PC {
             bits.set(i, padding_amount & (1 << i) != 0);
         }
 
-        while bits.len() < BoxMon::bit_count() {
+        while bits.len() < T::bit_count() {
             bits.push(false);
         }
 
-        self.mons[0] = Some(BoxMon::bits_to_game_value(&BoxMonBitVec(bits)).unwrap());
+        self.mons[0] = Some(T::bits_to_game_value(&BoxMonBitVec(bits)).unwrap());
     }
 
     pub fn get_padding_amount(&self) -> u8 {
@@ -65,7 +70,7 @@ impl PC {
         padding
     }
 
-    pub fn set_mon(&mut self, box_index: usize, mon_index: usize, mon: BoxMon) {
+    pub fn set_mon(&mut self, box_index: usize, mon_index: usize, mon: T) {
         let index = box_index * PC_BOX_SIZE + mon_index;
         self.mons[index] = Some(mon);
         self.raw_cache = None;
@@ -92,7 +97,7 @@ impl PC {
                         let bits = mon.game_value_to_bits().unwrap();
                         if i == last_mon_index - 1 {
                             let padding_amount = self.get_padding_amount();
-                            for i in 0..BoxMon::bit_count() - padding_amount as usize {
+                            for i in 0..T::bit_count() - padding_amount as usize {
                                 fat.push(bits.0[i]);
                             }
                         } else {
@@ -111,12 +116,12 @@ impl PC {
 
     pub fn remaining_bytes(&self) -> usize {
         let current_offset = self.get_empty_offset();
-        let remaining_bytes = (NUM_OF_DATA_MONS - (current_offset - 1)) * BoxMon::byte_count();
+        let remaining_bytes = (NUM_OF_DATA_MONS - (current_offset - 1)) * T::byte_count();
         remaining_bytes
     }
 }
 
-impl std::io::Write for PC {
+impl<T: BoxMon> std::io::Write for PC<T> {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let bits: BoxMonBitVec = BoxMonBitVec::new_from_raw(buf);
 
@@ -145,8 +150,8 @@ impl std::io::Write for PC {
                 .game_value_to_bits()
                 .unwrap();
 
-            let start_offset = BoxMon::bit_count() - padding_amount as usize;
-            let end_offset = BoxMon::bit_count().min(bits.0.len());
+            let start_offset = T::bit_count() - padding_amount as usize;
+            let end_offset = T::bit_count().min(bits.0.len());
             // Replace padding data with
             for i in start_offset..end_offset {
                 last_mon_bits.0.set(i, bits.0[i]);
@@ -164,15 +169,15 @@ impl std::io::Write for PC {
         }
 
         loop {
-            let end_offset = (offset + BoxMon::bit_count()).min(bits.0.len());
+            let end_offset = (offset + T::bit_count()).min(bits.0.len());
 
             let mut chunk = bits.chunk(offset, end_offset);
-            let surplus_bits = BoxMon::bit_count() - chunk.0.len();
-            while chunk.0.len() < BoxMon::bit_count() {
+            let surplus_bits = T::bit_count() - chunk.0.len();
+            while chunk.0.len() < T::bit_count() {
                 chunk.0.push(false);
             }
 
-            let mon = BoxMon::bits_to_game_value(&chunk).unwrap();
+            let mon = T::bits_to_game_value(&chunk).unwrap();
             self.mons[current_offset] = Some(mon);
             current_offset += 1;
 
@@ -191,7 +196,7 @@ impl std::io::Write for PC {
     }
 }
 
-impl std::io::Read for PC {
+impl<T: BoxMon> std::io::Read for PC<T> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let current_read_offset = self.current_read_offset;
         let data = self.get_data();
@@ -213,13 +218,15 @@ impl std::io::Read for PC {
 
 #[cfg(test)]
 mod test {
+    use crate::box_mon_lite::BoxMonLite;
+
     use super::*;
     use std::io::Read;
     use std::io::Write;
 
     #[test]
     fn write_arbitrary_data_to_pc() {
-        let mut pc = PC::new();
+        let mut pc = PC::<BoxMonLite>::new();
 
         let huge_amount_of_data = include_bytes!("../../test_assets/ricky.webp").to_vec();
 
@@ -233,20 +240,20 @@ mod test {
 
     #[test]
     fn ensure_normal_amount_of_bits() {
-        assert_eq!(PC::bit_count() % 8, 0);
+        assert_eq!(PC::<BoxMonLite>::bit_count() % 8, 0);
     }
 
     #[test]
     fn byte_count_accuracy() {
-        let pc = PC::new();
-        assert_eq!(PC::byte_count(), pc.remaining_bytes());
+        let pc = PC::<BoxMonLite>::new();
+        assert_eq!(PC::<BoxMonLite>::byte_count(), pc.remaining_bytes());
     }
 
     #[test]
     fn completely_fill_pc() {
-        let mut pc = PC::new();
+        let mut pc = PC::<BoxMonLite>::new();
 
-        let mut data = vec![0; PC::byte_count()];
+        let mut data = vec![0; PC::<BoxMonLite>::byte_count()];
         for i in 0..data.len() {
             data[i] = (i % 255) as u8;
         }
@@ -257,5 +264,24 @@ mod test {
         pc.read_to_end(&mut buf).unwrap();
 
         assert_eq!(data, buf);
+    }
+
+    #[test]
+    fn completely_fill_full_pc() {
+        let mut pc = PC::<BoxMonFull>::new();
+
+        let mut data = vec![0; PC::<BoxMonFull>::byte_count()];
+        for i in 0..data.len() {
+            data[i] = (i % 255) as u8;
+        }
+
+        pc.write(&data).unwrap();
+
+        let mut buf = Vec::new();
+        pc.read_to_end(&mut buf).unwrap();
+
+        for i in 0..data.len() {
+            assert_eq!(data[i], buf[i], "Index: {}", i);
+        }
     }
 }

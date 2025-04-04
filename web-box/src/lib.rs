@@ -1,12 +1,18 @@
 use std::io::Write;
 
-use mon_fs_box::{file_pc::FilePc, pc::PC};
+use mon_fs_box::{
+    box_mon::BoxMon, box_mon_full::BoxMonFull, box_mon_lite::BoxMonLite, file_pc::FilePc, pc::PC,
+};
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use zip::{write::SimpleFileOptions, ZipWriter};
 
-#[wasm_bindgen]
-pub fn encode_file(existing_pc: String, filename: String, to_encode: Vec<u8>) -> String {
-    let mut pc: PC = serde_json::from_str(&existing_pc).unwrap();
+fn encode_file<T: BoxMon + for<'de> Deserialize<'de> + Serialize>(
+    existing_pc: String,
+    filename: String,
+    to_encode: Vec<u8>,
+) -> String {
+    let mut pc: PC<T> = serde_json::from_str(&existing_pc).unwrap();
     pc.fill_empty_mon_slots();
 
     let mut file_pc = if let Some(file_pc) = FilePc::new_from_pc(pc) {
@@ -17,14 +23,13 @@ pub fn encode_file(existing_pc: String, filename: String, to_encode: Vec<u8>) ->
 
     file_pc.add_file_raw(&filename, to_encode).unwrap();
 
-    let pc: PC = file_pc.into();
+    let pc: PC<T> = file_pc.into();
 
     serde_json::to_string(&pc).unwrap()
 }
 
-#[wasm_bindgen]
-pub fn decode_file(existing_pc: String) -> Vec<u8> {
-    let mut pc: PC = serde_json::from_str(&existing_pc).unwrap();
+fn decode_file<T: BoxMon + for<'de> Deserialize<'de> + Serialize>(existing_pc: String) -> Vec<u8> {
+    let mut pc: PC<T> = serde_json::from_str(&existing_pc).unwrap();
 
     pc.fill_empty_mon_slots();
 
@@ -47,9 +52,29 @@ pub fn decode_file(existing_pc: String) -> Vec<u8> {
     result
 }
 
+#[wasm_bindgen]
+pub fn lite_encode_file(existing_pc: String, filename: String, to_encode: Vec<u8>) -> String {
+    encode_file::<BoxMonLite>(existing_pc, filename, to_encode)
+}
+
+#[wasm_bindgen]
+pub fn lite_decode_file(existing_pc: String) -> Vec<u8> {
+    decode_file::<BoxMonLite>(existing_pc)
+}
+
+#[wasm_bindgen]
+pub fn full_encode_file(existing_pc: String, filename: String, to_encode: Vec<u8>) -> String {
+    encode_file::<BoxMonFull>(existing_pc, filename, to_encode)
+}
+
+#[wasm_bindgen]
+pub fn full_decode_file(existing_pc: String) -> Vec<u8> {
+    decode_file::<BoxMonFull>(existing_pc)
+}
+
 #[cfg(test)]
 mod test {
-    use mon_fs_box::mon_field::ByteCount;
+    use mon_fs_box::{mon_field::ByteCount, pc::PcLite};
     use rand::Rng;
 
     use super::*;
@@ -58,31 +83,31 @@ mod test {
     fn file_encode_decode_files() {
         const FILE_COUNT: usize = 8;
 
-        let mut data_chunk = vec![0; PC::byte_count() / 10];
+        let mut data_chunk = vec![0; PcLite::byte_count() / 10];
         for i in 0..data_chunk.len() {
             data_chunk[i] = rand::thread_rng().gen()
         }
 
         let file_pc = FilePc::new();
 
-        let pc: PC = file_pc.into();
+        let pc: PcLite = file_pc.into();
 
         let mut pc_json = serde_json::to_string(&pc).unwrap();
 
         for i in 0..FILE_COUNT {
-            pc_json = encode_file(pc_json, format!("test_{}.txt", i), data_chunk.clone());
+            pc_json = lite_encode_file(pc_json, format!("test_{}.txt", i), data_chunk.clone());
 
-            let pc = serde_json::from_str(&pc_json).unwrap();
+            let pc: PcLite = serde_json::from_str(&pc_json).unwrap();
             let file_pc = mon_fs_box::file_pc::FilePc::new_from_pc(pc).unwrap();
             assert_eq!(file_pc.files.len(), i + 1);
         }
 
-        let pc = serde_json::from_str(&pc_json).unwrap();
+        let pc: PcLite = serde_json::from_str(&pc_json).unwrap();
         let pc = mon_fs_box::file_pc::FilePc::new_from_pc(pc).unwrap();
 
         assert_eq!(pc.files.len(), FILE_COUNT);
 
-        decode_file(pc_json);
+        lite_decode_file(pc_json);
     }
 
     #[test]
@@ -90,11 +115,11 @@ mod test {
     fn fail_encode_duplicated_file() {
         let data = vec![0; 10];
         let file_pc = FilePc::new();
-        let pc: PC = file_pc.into();
+        let pc: PcLite = file_pc.into();
         let mut pc_json = serde_json::to_string(&pc).unwrap();
 
-        pc_json = encode_file(pc_json, "test.txt".to_string(), data.clone());
+        pc_json = lite_encode_file(pc_json, "test.txt".to_string(), data.clone());
 
-        encode_file(pc_json, "test.txt".to_string(), data.clone());
+        lite_encode_file(pc_json, "test.txt".to_string(), data.clone());
     }
 }

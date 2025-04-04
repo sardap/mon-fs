@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { type WebBoxMon, POSSIBLE_NAME_LETTERS, POSSIBLE_SPECIES, POSSIBLE_ITEMS } from '@/pc'
+import {
+  type WebBoxMon,
+  POSSIBLE_NAME_LETTERS,
+  POSSIBLE_SPECIES,
+  POSSIBLE_ITEMS,
+  POSSIBLE_SPECIES_FULL,
+  POSSIBLE_BALLS,
+  POSSIBLE_MOVES_FULL,
+  POSSIBLE_ITEMS_FULL
+} from '@/pc'
 import { usePcStore } from '@/stores/pc_store'
 import { computed } from 'vue'
+import { getItemIcon, getPcMarkIcon, boolBoxMonToGenderIcon } from '@/icons'
 
 const pcStore = usePcStore()
 
@@ -40,6 +50,10 @@ function invertGender(mon: WebBoxMon) {
     mon.gender = 'Male'
   }
 }
+
+const speciesList = computed(() => {
+  return pcStore.sizeMode() === 'lite' ? POSSIBLE_SPECIES : POSSIBLE_SPECIES_FULL
+})
 </script>
 
 <template>
@@ -58,7 +72,7 @@ function invertGender(mon: WebBoxMon) {
             </button>
           </div>
           <select v-model="mon.species">
-            <option v-for="species in POSSIBLE_SPECIES" :key="species" :value="species">
+            <option v-for="species in speciesList" :key="species" :value="species">
               {{ species.toLowerCase() }}
             </option>
           </select>
@@ -69,12 +83,88 @@ function invertGender(mon: WebBoxMon) {
             class="mon-img"
           />
         </div>
-        <select v-model="mon.held_item">
-          <option v-for="item in POSSIBLE_ITEMS" :key="item" :value="item">
-            {{ item }}
-          </option>
-        </select>
-        <img v-if="mon.held_item" :src="`gfx/items/${mon.held_item.replace('.', '-')}.png`" />
+        <div>
+          <select v-model="mon.ball">
+            <option v-for="item in POSSIBLE_BALLS" :key="item" :value="item">
+              {{ item }}
+            </option>
+          </select>
+          <img v-if="mon.ball" :src="getItemIcon(mon.ball)" />
+        </div>
+        <div v-if="pcStore.sizeMode() === 'full'">
+          <label>Pokerus: </label>
+          <input type="checkbox" v-model="mon.virus" />
+        </div>
+        <div v-if="pcStore.sizeMode() === 'full'">
+          <label>Shiny: </label>
+          <input type="checkbox" v-model="mon.shiny" />
+        </div>
+        <div v-if="mon.pc_mark">
+          <img
+            class="pc-mark"
+            v-for="(mark, i) in mon.pc_mark"
+            :key="i"
+            @click="
+              () => {
+                if (!mon.pc_mark) {
+                  mon.pc_mark = []
+                }
+
+                mon.pc_mark[i] = !mon.pc_mark[i]
+              }
+            "
+            :src="`/gfx/pc_mark/${getPcMarkIcon(mark, i)}`"
+            width="25"
+          />
+        </div>
+        <div>
+          <label>EXP: </label>
+          <input type="number" v-model="mon.exp" />
+        </div>
+        <div v-if="pcStore.sizeMode() === 'full'">
+          <p>
+            OT
+            <button v-if="mon.ot_gender !== undefined" @click="mon.ot_gender = !mon.ot_gender">
+              <img
+                class="mon-gender"
+                :src="boolBoxMonToGenderIcon(mon.ot_gender)"
+                :alt="mon.gender"
+              />
+            </button>
+          </p>
+          <label>Name</label>
+          <input v-model="mon.ot_name" />
+          <label>TID</label>
+          <input class="ot-tid" type="number" v-model="mon.ot_tid" />
+          <label>Met@</label>
+          <input class="met-level" type="number" v-model="mon.met_level" />
+        </div>
+        <div v-if="mon.move_set">
+          <p>Moves</p>
+          <div v-for="(move, i) in mon.move_set" :key="i">
+            <select v-model="mon.move_set[i]">
+              <option v-for="move in POSSIBLE_MOVES_FULL" :key="move" :value="move">
+                {{ move }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <br />
+        <div v-if="pcStore.sizeMode() === 'lite'">
+          <select v-model="mon.held_item">
+            <option v-for="item in POSSIBLE_ITEMS" :key="item" :value="item">
+              {{ item }}
+            </option>
+          </select>
+        </div>
+        <div v-else>
+          <select v-model="mon.held_item">
+            <option v-for="item in POSSIBLE_ITEMS_FULL" :key="item" :value="item">
+              {{ item }}
+            </option>
+          </select>
+        </div>
+        <img v-if="mon.held_item" :src="getItemIcon(mon.held_item)" />
       </div>
     </div>
     <div v-if="visibleMons.length < 30" class="box-mon add-remove">
@@ -90,6 +180,18 @@ input {
   width: 90px;
   margin-right: 5px;
   margin-bottom: 5px;
+}
+
+.ot-tid {
+  width: 80px;
+}
+
+.met-level {
+  width: 50px;
+}
+
+input[type='checkbox'] {
+  width: 20px;
 }
 
 select {
@@ -109,6 +211,14 @@ select {
 }
 
 .mon-gender:hover {
+  cursor: pointer;
+}
+
+.pc-mark {
+  padding: 5px;
+}
+
+.pc-mark:hover {
   cursor: pointer;
 }
 </style>

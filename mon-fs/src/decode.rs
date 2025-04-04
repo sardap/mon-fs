@@ -31,17 +31,17 @@ struct DecoderOutput {
     boxes: Vec<Vec<StringsMon>>,
 }
 
-impl TryInto<PC> for DecoderOutput {
+impl<T: BoxMon> TryInto<PC<T>> for DecoderOutput {
     type Error = StringMonParseError;
 
-    fn try_into(self) -> Result<PC, Self::Error> {
+    fn try_into(self) -> Result<PC<T>, Self::Error> {
         let mut pc = PC::new();
         for (box_index, box_mon) in self.boxes.into_iter().enumerate() {
             for (mon_index, mon) in box_mon.into_iter().enumerate() {
                 pc.set_mon(
                     box_index,
                     mon_index,
-                    match BoxMon::try_from_strings_mon(mon) {
+                    match T::try_from(mon) {
                         Ok(mon) => mon,
                         Err(err) => return Err(err),
                     },
@@ -53,7 +53,7 @@ impl TryInto<PC> for DecoderOutput {
     }
 }
 
-pub fn load_pc_from_screenshots(options: &OptionsDecode) -> Result<PC, ProgramError> {
+pub fn load_pc_from_screenshots<T: BoxMon>(options: &OptionsDecode) -> Result<PC<T>, ProgramError> {
     let pc_screenshots = std::fs::canonicalize(&options.pc_screenshots).unwrap();
 
     if !pc_screenshots.exists() || !pc_screenshots.is_dir() {
@@ -87,7 +87,7 @@ pub fn load_pc_from_screenshots(options: &OptionsDecode) -> Result<PC, ProgramEr
 
     let output: DecoderOutput = serde_json::from_str(&output).unwrap();
 
-    let pc: PC = output.try_into().unwrap();
+    let pc: PC<T> = output.try_into().unwrap();
 
     Ok(pc)
 }

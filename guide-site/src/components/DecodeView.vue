@@ -2,7 +2,7 @@
 import { usePcStore } from '@/stores/pc_store'
 import EditBoxView from './EditBoxView.vue'
 import { computed, ref } from 'vue'
-import { decode_file } from 'mon-fs-web-box'
+import { lite_decode_file, full_decode_file } from 'mon-fs-web-box'
 
 const pcStore = usePcStore()
 const endBox = computed(() => pcStore.lastBox())
@@ -16,7 +16,11 @@ function decodeButton() {
   error.value = ''
   let raw: Uint8Array
   try {
-    raw = decode_file(pcStore.pcJson())
+    if (pcStore.sizeMode() === 'full') {
+      raw = full_decode_file(pcStore.pcJson())
+    } else {
+      raw = lite_decode_file(pcStore.pcJson())
+    }
   } catch (e) {
     console.error(e)
     error.value = 'Error decoding input check everything is correct'
