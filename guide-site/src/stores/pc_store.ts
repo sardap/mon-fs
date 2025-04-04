@@ -5,6 +5,7 @@ import { ref } from 'vue'
 export const usePcStore = defineStore('pc', () => {
   const mons = ref<WebBoxMon[]>([])
   const currentBox = ref(0)
+  const currentSizeMode = ref<'full' | 'lite'>('full')
 
   function setMons(new_mons: (BoxMon | WebBoxMon | null)[]) {
     currentBox.value = 0
@@ -195,6 +196,14 @@ export const usePcStore = defineStore('pc', () => {
     )
   }
 
+  function sizeMode(): 'full' | 'lite' {
+    return currentSizeMode.value
+  }
+
+  function setMode(mode: 'full' | 'lite') {
+    currentSizeMode.value = mode
+  }
+
   return {
     mons,
     currentBox,
@@ -208,6 +217,8 @@ export const usePcStore = defineStore('pc', () => {
     addMon,
     removeMon,
     lastBox,
-    pcJson
+    pcJson,
+    sizeMode,
+    setMode
   }
 })

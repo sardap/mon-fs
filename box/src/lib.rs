@@ -1,13 +1,32 @@
 pub mod box_mon;
+pub mod box_mon_full;
+pub mod box_mon_lite;
 pub mod file_pc;
 pub mod mon_captured_ball;
+pub mod mon_exp_field;
 pub mod mon_field;
 pub mod mon_gender;
 pub mod mon_held_item;
+pub mod mon_held_item_full;
+pub mod mon_met_level_field;
+pub mod mon_moves_field;
 pub mod mon_name;
+pub mod mon_nature_field;
+pub mod mon_ot_gender_field;
+pub mod mon_ot_name_field;
+pub mod mon_ot_tid_field;
+pub mod mon_pc_mark_field;
+pub mod mon_ribbons_field;
+pub mod mon_shiny_field;
 pub mod mon_species;
+pub mod mon_species_full;
+pub mod mon_virus_field;
 pub mod pc;
 use bit_vec::BitVec;
+use box_mon::StringMonParseError;
+use mon_field::FromRepresentation;
+use serde::{Deserialize, Serialize};
+use strum::{Display, EnumCount, EnumIter, FromRepr};
 
 #[derive(Debug, Clone, Default)]
 pub struct BoxMonBitVec(pub BitVec);
@@ -81,7 +100,6 @@ impl BoxMonBitVec {
         result
     }
 
-    #[cfg(test)]
     pub fn as_u64(&self) -> u64 {
         let mut result = 0;
         for i in 0..self.0.len() {
@@ -95,6 +113,63 @@ impl BoxMonBitVec {
 
 pub fn count_to_bits(n: usize) -> usize {
     (n as f64).log2().floor() as usize
+}
+
+#[derive(
+    FromRepr,
+    Default,
+    Debug,
+    Clone,
+    Copy,
+    EnumCount,
+    EnumIter,
+    PartialEq,
+    Eq,
+    Display,
+    Serialize,
+    Deserialize,
+)]
+#[repr(u8)]
+pub enum StupidNumber {
+    #[default]
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+}
+
+impl FromRepresentation for StupidNumber {
+    fn from_repr(repr: u8) -> Option<Self> {
+        Self::from_repr(repr)
+    }
+
+    fn to_u8(&self) -> u8 {
+        *self as u8
+    }
+}
+
+impl TryFrom<u8> for StupidNumber {
+    type Error = StringMonParseError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            1 => Ok(StupidNumber::One),
+            2 => Ok(StupidNumber::Two),
+            3 => Ok(StupidNumber::Three),
+            4 => Ok(StupidNumber::Four),
+            5 => Ok(StupidNumber::Five),
+            6 => Ok(StupidNumber::Six),
+            7 => Ok(StupidNumber::Seven),
+            8 => Ok(StupidNumber::Eight),
+            9 => Ok(StupidNumber::Nine),
+            _ => Err(StringMonParseError::InvalidStupidNumber(value.to_string())),
+        }
+    }
 }
 
 #[cfg(test)]

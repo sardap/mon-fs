@@ -1,6 +1,6 @@
 use std::fs::{self, File};
 
-use mon_fs_box::{file_pc::FilePc, pc::PC};
+use mon_fs_box::{box_mon_lite::BoxMonLite, file_pc::FilePc, pc::PcLite};
 use structopt::StructOpt;
 
 mod decode;
@@ -35,8 +35,8 @@ fn main() -> Result<(), ProgramError> {
             }
         };
 
-        // Decode to PC
-        match serde_json::from_slice::<PC>(&existing) {
+        // Decode to PcLite
+        match serde_json::from_slice::<PcLite>(&existing) {
             Ok(pc) => pc.into(),
             Err(_) => {
                 return Err(ProgramError::BadGuideFileGiven(format!(
@@ -57,7 +57,7 @@ fn main() -> Result<(), ProgramError> {
         }
         options::Command::Decode(options_decode) => {
             println!("Parsing screenshots...");
-            let pc = match decode::load_pc_from_screenshots(&options_decode) {
+            let pc = match decode::load_pc_from_screenshots::<BoxMonLite>(&options_decode) {
                 Ok(pc) => pc,
                 Err(err) => {
                     return Err(err);
@@ -77,7 +77,7 @@ fn main() -> Result<(), ProgramError> {
         fs::remove_file(&options.pc_file).unwrap();
     }
 
-    let pc: PC = match file_pc.as_pc() {
+    let pc: PcLite = match file_pc.as_pc() {
         Ok(pc) => pc,
         Err(err) => {
             return Err(ProgramError::IoError(err));

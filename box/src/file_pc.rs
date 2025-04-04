@@ -7,7 +7,7 @@ use std::{
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
 
-use crate::pc::PC;
+use crate::{box_mon::BoxMon, pc::PC};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PcFile {
@@ -72,7 +72,7 @@ impl FilePc {
         FilePc { files: Vec::new() }
     }
 
-    pub fn new_from_pc(mut pc: PC) -> Option<Self> {
+    pub fn new_from_pc<T: BoxMon>(mut pc: PC<T>) -> Option<Self> {
         let mut buf = Vec::new();
         if pc.read_to_end(&mut buf).is_err() {
             return None;
@@ -125,7 +125,7 @@ impl FilePc {
         }
     }
 
-    pub fn as_pc(&self) -> Result<PC, std::io::Error> {
+    pub fn as_pc<T: BoxMon>(&self) -> Result<PC<T>, std::io::Error> {
         let encoded = bincode::serialize(&self).unwrap();
 
         let mut pc = PC::new();
@@ -136,14 +136,14 @@ impl FilePc {
     }
 }
 
-impl Into<PC> for FilePc {
-    fn into(self) -> PC {
+impl<T: BoxMon> Into<PC<T>> for FilePc {
+    fn into(self) -> PC<T> {
         self.as_pc().unwrap()
     }
 }
 
-impl From<PC> for FilePc {
-    fn from(value: PC) -> Self {
+impl<T: BoxMon> From<PC<T>> for FilePc {
+    fn from(value: PC<T>) -> Self {
         Self::new_from_pc(value).unwrap()
     }
 }
@@ -152,7 +152,7 @@ impl From<PC> for FilePc {
 mod test {
     use std::{fs::File, path::PathBuf};
 
-    use crate::{mon_field::ByteCount, pc::PC};
+    use crate::{mon_field::ByteCount, pc::PcLite};
     use tempdir::TempDir;
 
     use super::FilePc;
@@ -179,13 +179,13 @@ mod test {
             std::io::copy(&mut song, &mut tmp_file).unwrap();
         }
 
-        assert!(PC::byte_count() >= total_size);
+        assert!(PcLite::byte_count() >= total_size);
 
         let mut file_pc = FilePc::new();
         file_pc.add_file("ricky.webp", &pic_file_path).unwrap();
         file_pc.add_file("song.opus", &song_file_path).unwrap();
 
-        let pc: PC = file_pc.into();
+        let pc: PcLite = file_pc.into();
 
         let file_pc: FilePc = pc.into();
 

@@ -2,6 +2,7 @@
 import { type WebBoxMon } from '@/pc'
 import { usePcStore } from '@/stores/pc_store'
 import { ref } from 'vue'
+import { getItemIcon, getPcMarkIcon, boolBoxMonToGenderIcon } from '@/icons'
 
 const pcStore = usePcStore()
 
@@ -65,11 +66,44 @@ function monItemClass(mon: WebBoxMon) {
               :alt="mon.gender"
             />
           </p>
+          <p v-if="pcStore.sizeMode() == `full`">{{ mon.shiny ? `✨ ` : `` }}{{ mon.species }}</p>
+          <img v-if="mon.ball" :src="getItemIcon(mon.ball)" />
           <img :src="`gfx/mons/${mon.species.toLowerCase()}.png`" :alt="mon.name" class="mon-img" />
+          <p v-if="mon.virus !== undefined">Pokerus:{{ mon.virus ? `😷YES` : `NO` }}</p>
+          <div v-if="mon.pc_mark">
+            <img
+              v-for="(value, i) in mon.pc_mark"
+              :key="i"
+              width="15"
+              style="margin: 0 2px"
+              :src="`gfx/pc_mark/${getPcMarkIcon(value, i)}`"
+            />
+          </div>
+          <p v-if="mon.exp != undefined">EXP: {{ mon.exp }}</p>
+          <p v-if="mon.ribbons != undefined">Ribbons: {{ mon.ribbons }}</p>
+          <div v-if="mon.ot_tid != undefined" class="ot-info">
+            <p style="text-align: center">
+              OT
+              <img
+                v-if="mon.ot_gender !== undefined"
+                class="mon-gender"
+                :src="boolBoxMonToGenderIcon(mon.ot_gender)"
+                :alt="mon.gender"
+              />
+            </p>
+            <p v-if="mon.ot_name">{{ mon.ot_name }}</p>
+            <p>TID: {{ mon.ot_tid }}</p>
+            <p v-if="mon.met_level !== undefined">MET@: {{ mon.met_level }}</p>
+          </div>
+          <div v-if="mon.move_set">
+            <p style="text-align: center">Moves</p>
+            <p class="move-set" v-for="move in mon.move_set" :key="move">{{ move }}</p>
+          </div>
+          <br />
         </div>
         <div class="item-part" @click="itemClicked(mon)" :class="monItemClass(mon)">
           <p>{{ mon.held_item }}</p>
-          <img v-if="mon.held_item" :src="`gfx/items/${mon.held_item.replace('.', '-')}.png`" />
+          <img v-if="mon.held_item" :src="getItemIcon(mon.held_item)" />
         </div>
       </div>
     </div>
@@ -77,6 +111,11 @@ function monItemClass(mon: WebBoxMon) {
 </template>
 
 <style scoped>
+.move-set {
+  text-align: left;
+  margin-left: 10px;
+}
+
 .mon-name {
   font-family: 'Courier New', Courier, monospace;
 }
@@ -112,5 +151,12 @@ function monItemClass(mon: WebBoxMon) {
 .box-mon {
   text-align: center;
   width: 100%;
+}
+
+.ot-info {
+  text-align: center;
+  margin-left: 10px;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 </style>

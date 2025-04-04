@@ -5,7 +5,7 @@ import NeededMons from './components/NeededMons.vue'
 import { usePcStore } from './stores/pc_store'
 import NeededItems from '@/components/NeededItems.vue'
 import FreePCSpace from '@/components/FreePCSpace.vue'
-import init, { encode_file } from 'mon-fs-web-box'
+import init, { full_encode_file, lite_encode_file } from 'mon-fs-web-box'
 import DecodeView from './components/DecodeView.vue'
 
 const pcStore = usePcStore()
@@ -52,7 +52,13 @@ function encodeBinaryFile(event: Event) {
     console.log(file.name)
 
     try {
-      const json_str = encode_file(pc_json, file.name, uint8Array)
+      let json_str
+      if (pcStore.sizeMode() === 'lite') {
+        json_str = lite_encode_file(pc_json, file.name, uint8Array)
+      } else {
+        json_str = full_encode_file(pc_json, file.name, uint8Array)
+      }
+      console.log(json_str)
       const pc = JSON.parse(json_str)
       pcStore.setMons(pc.mons)
     } catch (e) {
@@ -110,6 +116,11 @@ function savePC() {
 
   document.body.removeChild(a)
 }
+
+function toggleMode() {
+  pcStore.setMode(pcStore.sizeMode() === 'lite' ? 'full' : 'lite')
+  clearPc()
+}
 </script>
 
 <template>
@@ -119,6 +130,13 @@ function savePC() {
 
   <main>
     <div>
+      <h2>Mode</h2>
+      <p>Currently in {{ pcStore.sizeMode() }} mode</p>
+      <Button @click="toggleMode()"
+        >Switch to {{ pcStore.sizeMode() === 'lite' ? `full` : `lite` }} mode</Button
+      >
+    </div>
+    <div>
       <h2>{{ encodeMode ? `Encode data` : `Decode Data` }}</h2>
       <button @click="encodeMode = !encodeMode">
         Switch to {{ encodeMode ? `Decode` : `Encode` }} mode
@@ -127,7 +145,8 @@ function savePC() {
     <div class="body">
       <div v-if="encodeMode">
         <p class="file-info">
-          Files under 3.2KB are guaranteed to work anything over might compress might not.
+          Files under {{ pcStore.sizeMode() === 'lite' ? '3.2KB' : '10.6KB' }} are guaranteed to
+          work anything over might compress might not.
         </p>
         <div class="row-container centered file-options">
           <div>

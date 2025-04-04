@@ -1,10 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getLocationsForItems } from '../item_locations'
+import { usePcStore } from '@/stores/pc_store'
+import { getItemIcon } from '@/icons'
+
+const pcStore = usePcStore()
 
 const props = defineProps<{ neededItems: { name: string; count: number }[] }>()
 
 const neededItems = computed(() => {
+  if (pcStore.sizeMode() === 'full') {
+    return props.neededItems.map((item) => {
+      return {
+        ...item,
+        location: null
+      }
+    })
+  }
+
   const locations = getLocationsForItems(props.neededItems.map((item) => item.name))
 
   const result = props.neededItems.map((item) => {
@@ -33,10 +46,10 @@ const neededItems = computed(() => {
 <template>
   <div v-for="item in neededItems" :key="item.name" class="item-row">
     <p>
-      <img :src="`gfx/items/${item.name.replace('.', '-')}.png`" /> {{ item.name }} :
+      <img :src="getItemIcon(item.name)" /> {{ item.name }} :
       {{ item.count }}
     </p>
-    <p>{{ item.location }}</p>
+    <p v-if="item.location">{{ item.location }}</p>
   </div>
 </template>
 
