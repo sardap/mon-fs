@@ -154,8 +154,6 @@ pub enum BoxMonSpeciesFull {
     Donphan,
     Stantler,
     Smeargle,
-    Tyrogue,
-    Hitmontop,
     Larvitar,
     Pupitar,
     Tyranitar,
@@ -278,6 +276,8 @@ pub enum BoxMonSpeciesFull {
     Nidorino,
     Latios,
     Nidoking,
+    Tyrogue,
+    Hitmonlee,
 }
 
 impl TryFrom<&str> for BoxMonSpeciesFull {
