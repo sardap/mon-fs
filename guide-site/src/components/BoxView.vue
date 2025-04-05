@@ -72,11 +72,24 @@ function monItemClass(mon: WebBoxMon) {
           <p v-if="mon.virus !== undefined">Pokerus:{{ mon.virus ? `😷YES` : `NO` }}</p>
           <div v-if="mon.pc_mark">
             <img
-              v-for="(value, i) in mon.pc_mark"
-              :key="i"
-              width="15"
               style="margin: 0 2px"
-              :src="`gfx/pc_mark/${getPcMarkIcon(value, i)}`"
+              width="15"
+              :src="`gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[0], 0)}`"
+            />
+            <img
+              style="margin: 0 2px"
+              width="15"
+              :src="`gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[2], 1)}`"
+            />
+            <img
+              style="margin: 0 2px"
+              width="15"
+              :src="`gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[1], 2)}`"
+            />
+            <img
+              style="margin: 0 2px"
+              width="15"
+              :src="`gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[3], 3)}`"
             />
           </div>
           <p v-if="mon.exp != undefined">EXP: {{ mon.exp }}</p>
