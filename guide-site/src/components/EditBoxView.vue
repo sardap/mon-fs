@@ -51,6 +51,14 @@ function invertGender(mon: WebBoxMon) {
   }
 }
 
+function togglePCMark(mon: WebBoxMon, index: number) {
+  if (!mon.pc_mark) {
+    mon.pc_mark = []
+  }
+
+  mon.pc_mark[index] = !mon.pc_mark[index]
+}
+
 const speciesList = computed(() => {
   return pcStore.sizeMode() === 'lite' ? POSSIBLE_SPECIES : POSSIBLE_SPECIES_FULL
 })
@@ -102,18 +110,26 @@ const speciesList = computed(() => {
         <div v-if="mon.pc_mark">
           <img
             class="pc-mark"
-            v-for="(mark, i) in mon.pc_mark"
-            :key="i"
-            @click="
-              () => {
-                if (!mon.pc_mark) {
-                  mon.pc_mark = []
-                }
-
-                mon.pc_mark[i] = !mon.pc_mark[i]
-              }
-            "
-            :src="`/gfx/pc_mark/${getPcMarkIcon(mark, i)}`"
+            @click="() => togglePCMark(mon, 0)"
+            :src="`/gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[0], 0)}`"
+            width="25"
+          />
+          <img
+            class="pc-mark"
+            @click="() => togglePCMark(mon, 0)"
+            :src="`/gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[2], 1)}`"
+            width="25"
+          />
+          <img
+            class="pc-mark"
+            @click="() => togglePCMark(mon, 0)"
+            :src="`/gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[1], 2)}`"
+            width="25"
+          />
+          <img
+            class="pc-mark"
+            @click="() => togglePCMark(mon, 0)"
+            :src="`/gfx/pc_mark/${getPcMarkIcon(mon.pc_mark[3], 3)}`"
             width="25"
           />
         </div>
