@@ -42,10 +42,12 @@ RUN apt-get update -y \
 
 WORKDIR /app
 COPY --from=mon-fs-builder /mon-fs/target/release/mon-fs .
-COPY --from=pk-hex-mon-fs /app/PKHeX.Everywhere/src/PKHeX.CLI.MonFS/bin/Release/net9.0/PKHeX.CLI.MonFS .
+COPY --from=pk-hex-mon-fs /app/PKHeX.Everywhere/src/PKHeX.CLI.MonFS/bin/Release/net9.0 ./pkhex
+
+ENV PATH="$PATH:/app/pkhex"
 
 WORKDIR /app/data
 
-VOLUME [ "/app/data" ]
+VOLUME [ "/app/out" ]
 
 ENTRYPOINT ["/app/mon-fs"]

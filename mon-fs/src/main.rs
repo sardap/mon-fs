@@ -154,11 +154,15 @@ fn run_full(
 
             println!("Encoding files into the save...");
 
-            let _ = Command::new(pk_hex_mon_fs)
+            let output = Command::new(pk_hex_mon_fs)
                 .arg("encode")
                 .arg(save_path)
                 .arg(pc_file_path)
                 .output();
+
+            if let Err(err) = output {
+                return Err(ProgramError::IoError(err));
+            }
 
             println!("Encoded files into the save");
         }
@@ -197,7 +201,7 @@ fn main() -> Result<(), ProgramError> {
         } => {
             let pk_hex_mon_fs = match pk_hex_mon_fs {
                 Some(path) => path,
-                None => match which("pk_hex_mon_fs") {
+                None => match which("PKHeX.CLI.MonFS") {
                     Ok(path) => path,
                     Err(_) => return Err(ProgramError::BadPathGiven(
                         "pk_hex_mon_fs could not be found in system $PATH please provide the path with --pk-hex-mon-fs"

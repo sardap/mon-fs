@@ -524,17 +524,23 @@ Now you are ready!
 
 ### Setting up (Docker)
 
-Run `docker build -t mon-fs:latest`
+Run `docker build -t mon-fs:latest .`
 
 ### Using the program
 
-Note: if using docker replace `./target/release/mon-fs` with `docker run -v "${PWD}:/app/data" --rm mon-fs:latest full`.
-
 Provide a folder and it will encode everything in that folder into the given save. It also spits out a `pc.json` file that you can upload to the site to view.
 
-Encoding: `./target/release/mon-fs full --save-path ./pokeemerald.sav --pk-hex-mon-fs PKHeX.CLI.MonFS encode --to-encode ./input/`
+#### Docker
 
-Decoding: `./target/release/mon-fs full --save-path ./pokeemerald.sav --pk-hex-mon-fs PKHeX.CLI.MonFS decode --decode-to ../out/`
+Encoding: `docker run -v "${PWD}/working:/app/data" --rm mon-fs:latest full --save-path ./pokeemerald.sav encode --to-encode ./input/`
+
+Decoding: `docker run -v "${PWD}/working:/app/data" --rm mon-fs:latest full --save-path ./pokeemerald.sav decode --decode-to ./out/`
+
+#### Native
+
+Encoding: `./target/release/mon-fs full --save-path ./pokeemerald.sav --pk-hex-mon-fs ./external/PKHeX.Everywhere/src/PKHeX.CLI.MonFS/bin/Release/net9.0/PKHeX.CLI.MonFS encode --to-encode ./input/`
+
+Decoding: `./target/release/mon-fs full --save-path ./pokeemerald.sav --pk-hex-mon-fs ./external/PKHeX.Everywhere/src/PKHeX.CLI.MonFS/bin/Release/net9.0/PKHeX.CLI.MonFS decode --decode-to ./out/`
 
 ## Data breakdown
 
