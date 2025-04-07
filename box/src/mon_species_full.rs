@@ -79,7 +79,6 @@ pub enum BoxMonSpeciesFull {
     Electabuzz,
     Magmar,
     Pinsir,
-    Tauros,
     Magikarp,
     Lapras,
     Eevee,
@@ -278,6 +277,7 @@ pub enum BoxMonSpeciesFull {
     Nidoking,
     Tyrogue,
     Hitmonlee,
+    Tauros,
 }
 
 impl TryFrom<&str> for BoxMonSpeciesFull {

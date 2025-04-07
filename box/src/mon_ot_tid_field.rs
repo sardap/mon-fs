@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     box_mon::StringMonParseError,
-    count_to_bits,
     mon_field::{BitCount, FromGameValueError, GameSerializer, ToGameValueError},
     BoxMonBitVec,
 };
@@ -20,7 +19,7 @@ impl TryFrom<u16> for BoxMonOtTidField {
 
 impl BitCount for BoxMonOtTidField {
     fn bit_count() -> usize {
-        count_to_bits(u16::MAX as usize)
+        16
     }
 }
 

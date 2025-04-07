@@ -9,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(PartialEq, Eq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct BoxMonExpField(pub u32);
 
-const MAX_EXP: u32 = 524_288;
+const MAX_EXP: u32 = 8388608;
 
 impl TryFrom<u32> for BoxMonExpField {
     type Error = StringMonParseError;

@@ -34,7 +34,7 @@ impl FromStringInput for BoxMonCapturedBall {
     where
         Self: Sized,
     {
-        match input.to_lowercase().as_str() {
+        match input.to_lowercase().strip_suffix("ball").unwrap() {
             "dive" => Some(BoxMonCapturedBall::DiveBall),
             "great" => Some(BoxMonCapturedBall::GreatBall),
             "nest" => Some(BoxMonCapturedBall::NestBall),

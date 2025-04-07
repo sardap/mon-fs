@@ -188,7 +188,7 @@ mod tests {
             gender: "M".to_string(),
             pc_mark: vec![false, false, false, false],
             held_item: "".to_string(),
-            captured_ball: "Pokeball".to_string(),
+            ball: "Pokeball".to_string(),
             move_set: vec![
                 "Tackle".to_string(),
                 "Howl".to_string(),

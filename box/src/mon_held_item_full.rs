@@ -1,4 +1,5 @@
-use crate::mon_field::{FromRepresentation, FromStringInput};
+use crate::box_mon::StringMonParseError;
+use crate::mon_field::FromRepresentation;
 use edit_distance::edit_distance;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -52,6 +53,7 @@ pub enum BoxMonHeldItemFull {
     FreshWater,
     SodaPop,
     Lemonade,
+    MoomooMilk,
     EnergyPowder,
     EnergyRoot,
     HealPowder,
@@ -67,6 +69,13 @@ pub enum BoxMonHeldItemFull {
     BlackFlute,
     WhiteFlute,
     BerryJuice,
+    SacredAsh,
+    ShoalSalt,
+    ShoalShell,
+    RedShard,
+    BlueShard,
+    YellowShard,
+    GreenShard,
     HpUp,
     Protein,
     Iron,
@@ -89,6 +98,37 @@ pub enum BoxMonHeldItemFull {
     MaxRepel,
     EscapeRope,
     Repel,
+    SunStone,
+    MoonStone,
+    FireStone,
+    ThunderStone,
+    WaterStone,
+    LeafStone,
+    CheriBerry,
+    ChestoBerry,
+    PechaBerry,
+    RawstBerry,
+    AspearBerry,
+    LeppaBerry,
+    OranBerry,
+    PersimBerry,
+    LumBerry,
+    SitrusBerry,
+    FigyBerry,
+    WikiBerry,
+    MagoBerry,
+    AguavBerry,
+    IapapaBerry,
+    RazzBerry,
+    BlukBerry,
+    NanabBerry,
+    WepearBerry,
+    PinapBerry,
+    PomegBerry,
+    KelpsyBerry,
+    QualotBerry,
+    HondewBerry,
+    GrepaBerry,
     TamatoBerry,
     CornnBerry,
     MagostBerry,
@@ -152,22 +192,103 @@ pub enum BoxMonHeldItemFull {
     Tm43,
     Tm44,
     Tm45,
+    Tm46,
+    Tm47,
+    Tm48,
+    Tm49,
+    Tm50,
+    Hm01,
+    Hm02,
+    Hm03,
+    Hm04,
+    Hm05,
+    Hm06,
+    Hm07,
+    Hm08,
+    BrightPowder,
+    WhiteHerb,
+    MachoBrace,
+    ExpShare,
+    QuickClaw,
+    SootheBell,
+    MentalHerb,
+    ChoiceBand,
+    KingsRock,
+    SilverPowder,
+    AmuletCoin,
+    CleanseTag,
+    SoulDew,
+    DeepSeaTooth,
+    DeepSeaScale,
+    SmokeBall,
+    Everstone,
+    FocusBand,
+    LuckyEgg,
+    ScopeLens,
+    MetalCoat,
+    Leftovers,
+    DragonScale,
+    LightBall,
+    SoftSand,
+    HardStone,
+    MiracleSeed,
+    BlackGlasses,
+    BlackBelt,
+    Magnet,
+    MysticWater,
+    SharpBeak,
+    PoisonBarb,
+    NeverMeltIce,
+    SpellTag,
+    TwistedSpoon,
+    Charcoal,
+    DragonFang,
+    SilkScarf,
+    UpGrade,
+    ShellBell,
+    SeaIncense,
+    LaxIncense,
+    LuckyPunch,
+    MetalPowder,
+    ThickClub,
+    Stick,
+    RedScarf,
+    BlueScarf,
+    PinkScarf,
+    GreenScarf,
+    YellowScarf,
+    TinyMushroom,
+    BigMushroom,
+    Pearl,
+    BigPearl,
+    Stardust,
+    StarPiece,
+    Nugget,
+    HeartScale,
+    MachBike,
+    CoinCase,
+    Itemfinder,
+    OldRod,
+    GoodRod,
+    SuperRod,
+    SsTicket,
+    ContestPass,
+    WailmerPail,
+    DevonGoods,
+    SootSack,
+    BasementKey,
+    AcroBike,
+    PokeblockCase,
+    Letter,
+    EonTicket,
 }
 
-impl FromRepresentation for BoxMonHeldItemFull {
-    fn from_repr(repr: u8) -> Option<Self> {
-        Self::from_repr(repr)
-    }
+impl TryFrom<&str> for BoxMonHeldItemFull {
+    type Error = StringMonParseError;
 
-    fn to_u8(&self) -> u8 {
-        *self as u8
-    }
-}
-
-impl FromStringInput for BoxMonHeldItemFull {
-    fn try_from_string(input: &str) -> Option<Self> {
-        if input.is_empty() {
-            return Some(BoxMonHeldItemFull::default());
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        if value.is_empty() {
+            return Err(StringMonParseError::InvalidHeldItem(value.to_string()));
         }
 
         lazy_static! {
@@ -180,14 +301,14 @@ impl FromStringInput for BoxMonHeldItemFull {
             };
         }
 
-        match STRING_TO_ENUM.get(input) {
-            Some(value) => Some(*value),
+        match STRING_TO_ENUM.get(value) {
+            Some(value) => Ok(*value),
             None => {
                 let keys = STRING_TO_ENUM.keys();
                 let mut best_key = None;
                 let mut best_score = (usize::MAX, None);
                 for key in keys {
-                    let distance = edit_distance(input, key);
+                    let distance = edit_distance(value, key);
                     if distance < best_score.0 {
                         best_score = (distance, Some(key.clone()));
                         best_key = Some(key.clone());
@@ -197,9 +318,22 @@ impl FromStringInput for BoxMonHeldItemFull {
                 let best_key = best_key.unwrap();
 
                 // Fuck it
-                STRING_TO_ENUM.get(&best_key).cloned()
+                match STRING_TO_ENUM.get(&best_key) {
+                    Some(result) => Ok(result.clone()),
+                    None => Err(StringMonParseError::InvalidHeldItem(value.to_string())),
+                }
             }
         }
+    }
+}
+
+impl FromRepresentation for BoxMonHeldItemFull {
+    fn from_repr(repr: u8) -> Option<Self> {
+        Self::from_repr(repr)
+    }
+
+    fn to_u8(&self) -> u8 {
+        *self as u8
     }
 }
 
@@ -226,13 +360,8 @@ mod tests {
     #[test]
     fn test_from_string() {
         assert_eq!(
-            BoxMonHeldItemFull::try_from_string(""),
-            Some(BoxMonHeldItemFull::default())
-        );
-
-        assert_eq!(
-            BoxMonHeldItemFull::try_from_string("SPELONBERRY"),
-            Some(BoxMonHeldItemFull::SpelonBerry)
+            BoxMonHeldItemFull::try_from("SPELONBERRY").unwrap(),
+            BoxMonHeldItemFull::SpelonBerry
         )
     }
 }

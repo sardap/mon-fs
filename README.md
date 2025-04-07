@@ -502,3 +502,121 @@ The site https://sardap.github.io/mon-fs/ presents the
 From my test of writing 1.9KB took 17922 Seconds giving us a write speed of 0.00084812 Kb/s or 0.84812 Bits per second.
 
 The data costs are $68,571,429 AUD per GB.
+
+# Full Mode
+
+## Using in full mode
+
+You can run natively or use docker.
+
+### Setting up (Native)
+
+1. Make sure rust is [setup](https://www.rust-lang.org/tools/install)
+2. Make sure .net 9.0 is [setup](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
+3. Run `git submodule update --init --recursive`
+4. Change into the PKHeX.CLI.MonFS dir `cd ./external/PKHeX.Everywhere/src/PKHeX.CLI.MonFS`
+5. Build it `dotnet build --configuration Release`
+6. Change back to the root of the repo `cd -`
+7. Copy the built PKHeX CLI tool to the root `cp ./external/PKHeX.Everywhere/src/PKHeX.CLI.MonFS/bin/Release/net9.0/PKHeX.CLI.MonFS PKHeX.CLI.MonFS`
+8. Build mon-fs `cargo build --release`
+
+Now you are ready!
+
+### Setting up (Docker)
+
+Run `docker build -t mon-fs:latest`
+
+### Using the program
+
+Note: if using docker replace `./target/release/mon-fs` with `docker run -v "${PWD}:/app/data" --rm mon-fs:latest full`.
+
+Provide a folder and it will encode everything in that folder into the given save. It also spits out a `pc.json` file that you can upload to the site to view.
+
+Encoding: `./target/release/mon-fs full --save-path ./pokeemerald.sav --pk-hex-mon-fs PKHeX.CLI.MonFS encode --to-encode ./input/`
+
+Decoding: `./target/release/mon-fs full --save-path ./pokeemerald.sav --pk-hex-mon-fs PKHeX.CLI.MonFS decode --decode-to ../out/`
+
+## Data breakdown
+
+### Section 1
+
+![ref_1](./readme/ref_1.png)
+
+### 1. Species: Bits 8
+
+The Kind of Pokemon using 256 (Kind of) different kinds Pokemon that can be Male or Female were chosen.
+With the exceptions of the following that will map to another kind to represent a female version:
+
+- Volbeat -> Illumise
+- Nidorino -> Nidorina
+- Latios -> Latias
+- Nidoking -> Nidoqueen
+- Tyrogue -> Chansey
+- Hitmonlee -> Blissey
+- Tauros -> Miltank
+
+The full list of used pokemon can be found [here](https://github.com/sardap/mon-fs/blob/main/box/src/mon_species_full.rs#L24).
+
+### 2. Name = 60
+
+we have over 64 and less than 128 possible characters in english emerald giving us a cool 6 bits per character. This let's me dyslexic proof it to make it easier for me to use. These are the letters I opted for "aAbBcCdDeEfFgGhHiIjJkKmMnNoOpPqQrRsStTuUvVwWxXyYzZ23456789!?/-…♂♀". I also opted to exclude spaces to make it easier to know exactly what letters in the name and prevent miscounting spaces or something else.
+
+### 3. Original Trainer Name = 42
+
+Works exactly like the Name only with a max length of 7, 7 \* 6 = 42 bits.
+
+### 4. Original Trainer Gender = 1
+
+Trainer gender in gen 3 is a simple 1 bit
+
+### 5. Original Trainer ID = 16
+
+We can use the full number TID is a 16 bit value giving us 16 bits.
+
+### 6. Met Level = 7
+
+Since met level is NOT a product of exp it can be over level 100 the max display value is 127 giving us a cool 7 bits.
+
+### 7. Virus = 1
+
+It's Pokerus on or off 1 bit. You can also not store Poisoned or anything like that inside a PC mon.
+
+### Section 2
+
+![ref_2](readme/ref_2.png)
+
+### 8. Held Item = 8
+
+There are 377 items in the game data however 67 are just garbage data (310) we can use 256 to get 8 the full list can be found [here](https://github.com/sardap/mon-fs/blob/main/box/src/mon_held_item_full.rs).
+
+### 9. Ribbons = 4
+
+I couldn't get more than 26 or 24 to work on a pokemon meaning we can only use 16 giving us 4 bits. From the encoding and decoding perspective the exact ribbons don't matter we just use the count since that's all you can see on the PC screen.
+
+### 10. Shiny = 1
+
+Easy enough every pokemon kind used can be shiny or not an easy 1 bit.
+
+### 11. Captured Ball = 3
+
+The ball the pokemon was caught with 8 pokeballs 3 bits.
+
+### 12. Gender = 1
+
+Used gender since we have less than 512 pokemon meaning we can only effectively use 256 removing all the gender unknown pokemon we are still above 256 so we can use it.
+
+### 13. Experience = 23
+
+This one was one of my largest big brain moments I was using the level originally then remembered that level is just a product of EXP the max displayable EXP is 9999999 giving us 8388608 as the max value with 23 bits.
+
+### Section 3
+
+![ref_3](readme/ref_3.png)
+
+### 14. Mark = 4
+
+This is those strange symbols each of the symbols act as a bit giving us 4 bits. (Fun fact the symbols order and display order is slightly different it's stored Circle, Triangle, Square, Heart but displayed Circle Square Triangle Heart).
+
+### 15. Move Set = 32
+
+This one works very simar to name we have 355 moves in the game meaning we can use 256 meaning each move slot is 8 bits we have have 4 move slots giving us 8 \* 4 = 32 bits. Move list can be found [here](https://github.com/sardap/mon-fs/blob/main/box/src/mon_moves_field.rs#L18).
