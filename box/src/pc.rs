@@ -6,8 +6,8 @@ use crate::BoxMonBitVec;
 use bit_vec::BitVec;
 use serde_derive::{Deserialize, Serialize};
 
-const PC_BOX_SIZE: usize = 30;
-const NUM_PC_BOXES: usize = 14;
+pub const PC_BOX_SIZE: usize = 30;
+pub const NUM_PC_BOXES: usize = 14;
 pub const NUM_OF_MONS: usize = PC_BOX_SIZE * NUM_PC_BOXES;
 const NUM_OF_DATA_MONS: usize = NUM_OF_MONS - 2;
 
@@ -70,8 +70,7 @@ impl<T: BoxMon> PC<T> {
         padding
     }
 
-    pub fn set_mon(&mut self, box_index: usize, mon_index: usize, mon: T) {
-        let index = box_index * PC_BOX_SIZE + mon_index;
+    pub fn set_mon(&mut self, index: usize, mon: T) {
         self.mons[index] = Some(mon);
         self.raw_cache = None;
     }
@@ -283,5 +282,10 @@ mod test {
         for i in 0..data.len() {
             assert_eq!(data[i], buf[i], "Index: {}", i);
         }
+    }
+
+    #[test]
+    fn pc_big_total_size() {
+        assert_eq!(PC::<BoxMonFull>::bit_count(), 0);
     }
 }

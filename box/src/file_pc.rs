@@ -53,11 +53,10 @@ impl PcFile {
         let data = self.get_data();
 
         let file_path = folder.clone().join(&self.name);
-        let mut file = if file_path.exists() {
-            std::fs::File::open(file_path).unwrap()
-        } else {
-            std::fs::File::create(file_path).unwrap()
-        };
+        if file_path.exists() {
+            std::fs::remove_file(&file_path).unwrap();
+        }
+        let mut file = std::fs::File::create(file_path).unwrap();
         file.write_all(&data).unwrap();
     }
 }
@@ -99,11 +98,9 @@ impl FilePc {
     }
 
     pub fn add_file_raw(&mut self, name: &str, data: Vec<u8>) -> Result<(), io::Error> {
-        if self.files.iter().any(|f| f.name == name) {
-            return Err(io::Error::new(
-                io::ErrorKind::AlreadyExists,
-                format!("File with name {} already exists", name),
-            ));
+        if let Some(existing) = self.files.iter_mut().find(|f| f.name == name) {
+            existing.data = data;
+            return Ok(());
         }
 
         self.files.push(PcFile::new(name, data));

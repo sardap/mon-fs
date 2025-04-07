@@ -35,9 +35,9 @@ impl FromRepresentation for BoxMonGender {
 
 impl FromStringInput for BoxMonGender {
     fn try_from_string(input: &str) -> Option<Self> {
-        Some(match input {
-            "M" => BoxMonGender::Male,
-            "F" => BoxMonGender::Female,
+        Some(match input.to_lowercase().as_str() {
+            "m" | "male" => BoxMonGender::Male,
+            "f" | "female" => BoxMonGender::Female,
             _ => return None,
         })
     }

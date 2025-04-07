@@ -35,6 +35,7 @@ pub enum StringMonParseError {
     InvalidOtNameCharacter(String),
     InvalidExpLength(usize),
     InvalidMetLevel(u8),
+    InvalidHeldItem(String),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,7 +44,7 @@ pub struct StringsMon {
     pub species: String,
     pub gender: String,
     pub pc_mark: Vec<bool>,
-    pub captured_ball: String,
+    pub ball: String,
     pub move_set: Vec<String>,
     pub held_item: String,
     pub ribbons: u8,

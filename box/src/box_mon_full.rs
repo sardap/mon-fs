@@ -75,9 +75,9 @@ impl TryFrom<StringsMon> for BoxMonFull {
 
         let pc_mark: BoxMonPCMark = raw.pc_mark.try_into()?;
 
-        let ball = match BoxMonCapturedBall::try_from_string(&raw.captured_ball) {
+        let ball = match BoxMonCapturedBall::try_from_string(&raw.ball) {
             Some(box_mon_ball) => box_mon_ball,
-            None => return Err(StringMonParseError::InvalidBall(raw.captured_ball)),
+            None => return Err(StringMonParseError::InvalidBall(raw.ball)),
         };
 
         let move_set: BoxMonMoveSet = raw.move_set.try_into()?;
@@ -87,10 +87,7 @@ impl TryFrom<StringsMon> for BoxMonFull {
             None => return Err(StringMonParseError::InvalidName(raw.name)),
         };
 
-        let held_item = match BoxMonHeldItemFull::try_from_string(&raw.held_item) {
-            Some(held_item) => held_item,
-            None => return Err(StringMonParseError::InvalidItem),
-        };
+        let held_item = raw.held_item.as_str().try_into()?;
 
         let ribbons = raw.ribbons.try_into()?;
 
@@ -259,7 +256,7 @@ mod tests {
             species: "NATU".to_string(),
             gender: "M".to_string(),
             pc_mark: vec![false, true, false, true],
-            captured_ball: "POKE".to_string(),
+            ball: "POKE".to_string(),
             held_item: "TM04".to_string(),
             move_set: vec![
                 "POUND".to_string(),

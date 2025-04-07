@@ -41,12 +41,6 @@ function encodeBinaryFile(event: Event) {
 
     error.value = ''
 
-    if (uint8Array.length > 1000000) {
-      error.value = 'File too large.'
-      loading.value = false
-      return
-    }
-
     const pc_json = pcStore.pcJson()
 
     console.log(file.name)
@@ -145,7 +139,7 @@ function toggleMode() {
     <div class="body">
       <div v-if="encodeMode">
         <p class="file-info">
-          Files under {{ pcStore.sizeMode() === 'lite' ? '3.2KB' : '10.6KB' }} are guaranteed to
+          Files under {{ pcStore.sizeMode() === 'lite' ? '3.2KB' : '10.8KB' }} are guaranteed to
           work anything over might compress might not.
         </p>
         <div class="row-container centered file-options">

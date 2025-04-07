@@ -9,6 +9,10 @@ export function getItemIcon(item: string) {
     return `gfx/items/TM01.png`
   }
 
+  if (itemUpper.startsWith('HM')) {
+    return `gfx/items/HMNORMAL.png`
+  }
+
   return `gfx/items/${itemUpper.replace('.', '-')}.png`
 }
 
